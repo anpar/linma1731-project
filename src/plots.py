@@ -8,12 +8,13 @@ import numpy as np
 PATH='../report/figures/'
 
 def plot_3d_trajectory(export=False, filename='q2-3d-trajectory.pdf'):
-    """Simulate the 3d-system for 50 seconds
+    """Simulate the 3d-system for 50 seconds and make a 3D plot of the
+    trajectory.
 
     Arguments:
     export -- indicate if the plot should be PDF exported and saved (default
     False)
-    filename -- tikz generate filename (default q2-3d-trajectory.pdf)
+    filename -- exported PDF filename (default q2-3d-trajectory.pdf)
     """
 
     xs, ys, zs = simulate(50)
@@ -31,16 +32,26 @@ def plot_3d_trajectory(export=False, filename='q2-3d-trajectory.pdf'):
         fig.savefig(PATH + filename)
 
 def plot_mes_vs_real(export=False, filename='q2-mes-vs-real.pdf'):
+    """Compare noisy measurements of the first coordinate of the particle
+    positions with the actual simulated first coordinate.
+
+    Arguments:
+    export -- indicate if the plot should be PDF exported and saved (default
+    False)
+    filename -- exported PDF filename (default q2-mes-vs-real.pdf)
+    """
+
     t_tot = 50
     dt = 0.001
     ts = 0.01
+    L = int(ts/dt)
     sigma_m = 1
 
-    a = np.arange(0, int(t_tot/dt)+1, 1)
-    b = np.arange(0, int(t_tot/dt), int(ts/dt))
+    a = np.arange(0, int(t_tot/dt) + 1, 1)
+    b = np.arange(0, int(t_tot/dt), L)
 
-    xs, _, _ = simulate(50)
-    xs_m = measure(xs, 50, 0.001, 0.01, 1)
+    xs, _, _ = simulate(t_tot)
+    xs_m = measure(xs, L)
 
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label='First coordinate trajectory')
