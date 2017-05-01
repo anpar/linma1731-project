@@ -48,14 +48,13 @@ def plot_mes_vs_real(export=False, filename='q2-mes-vs-real.pdf'):
     sigma_m = 1
 
     a = np.arange(0, int(t_tot/dt) + 1, 1)
-    b = np.arange(0, int(t_tot/dt), L)
 
     xs, _, _ = simulate(t_tot)
     xs_m = measure(xs, L)
 
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label='First coordinate trajectory')
-    ax.plot(b, xs_m, 'g.', label='Noisy measurements', markersize=4.0)
+    ax.plot(a[:-1:L], xs_m, 'g.', label='Noisy measurements', markersize=4.0)
     legend = ax.legend(loc='upper right')
 
     for label in legend.get_texts():
@@ -70,7 +69,7 @@ def plot_mes_vs_real(export=False, filename='q2-mes-vs-real.pdf'):
         fig.savefig(PATH + filename)
 
 def main():
-    plot_3d_trajectory(False)
+    #plot_3d_trajectory(False)
     plot_mes_vs_real(False)
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ def measure(xs, L, sigma_m=1):
     sigma_m -- standard deviation of the measurement noise (default 1)
     """
 
-    idx = [int(i*L) for i in range(int(len(xs)/L))]
+    xs_m = xs[:-1:L]
 
-    return xs[idx] + np.random.normal(0, sigma_m, len(idx))
+    return xs_m + np.random.normal(0, sigma_m, len(xs_m))
 
