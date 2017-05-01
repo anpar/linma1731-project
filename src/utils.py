@@ -1,5 +1,7 @@
+import sys
 import math
 import numpy as np
+import scipy.stats
 
 def get_init_pos(mu_0=1, sigma_0=math.sqrt(0.001)):
     """Return initial position of the Lorenz system.
@@ -88,3 +90,66 @@ def measure(xs, L, sigma_m=1):
 
     return xs_m + np.random.normal(0, sigma_m, len(xs_m))
 
+def print_progress(perc):
+    sys.stdout.write("\r%0.2f%%" % perc)
+    sys.stdout.flush()
+
+def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+    x_cur = np.copy(x)
+    y_cur = np.copy(y)
+    z_cur = np.copy(z)
+
+    for i in range(L):
+        x_cur, y_cur, z_cur = next_state_vector(x_cur, y_cur, z_cur, a, r, b,
+                                                dt, Gamma)
+
+    return x_cur, y_cur, z_cur
+
+def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+                  ts=0.01, Gamma=np.eye(3)):
+    """Classical Sequential Monte Carlo."""
+
+    n_iter = len(xs_m)
+    assert n_iter == int(t_tot/ts)
+
+    x_tilde = np.empty((n_iter, n))
+    y_tilde = np.empty((n_iter, n))
+    z_tilde = np.empty((n_iter, n))
+    weights = np.empty(n)
+
+    # Generates initial sample sets
+    x_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
+    y_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
+    z_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
+
+    wxs = np.zeros((3, n_iter))
+
+    # Loop on time
+    for t in range(1, n_iter):
+        print_progress(t/n_iter * 100.0)
+
+        # Prediction
+        for i in range(n):
+            x_tilde[t, i], y_tilde[t, i], z_tilde[t, i] = \
+            next_state_vector_L(x_tilde[t-1, i], y_tilde[t-1, i],
+                                z_tilde[t-1, i], L)
+        # Correction
+        for i in range(n):
+            weights[i] = scipy.stats.norm.pdf(x_tilde[t, i], xs_m[t],
+                                              sigma_m)
+            weights = abs(weights)
+            weights /= sum(weights)
+
+        for i in range(n):
+            wxs[:, t] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
+                                          z_tilde[t, i]])
+
+
+        # Resample the particles according to the weights
+        ind_sample = np.random.choice(np.arange(n), n, True, weights)
+
+        x_tilde[t, :] = x_tilde[t, ind_sample]
+        y_tilde[t, :] = y_tilde[t, ind_sample]
+        z_tilde[t, :] = z_tilde[t, ind_sample]
+
+    return x_tilde, y_tilde, z_tilde, wxs
