@@ -43,12 +43,12 @@ def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
     """
 
     eps = np.finfo(np.float32).eps
-    u = np.random.normal(0, 10*eps, 3)
+    u = np.random.normal(0, 100000*eps, 3)
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
 def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
-    """Simulate the Lorenz.
+    """Simulate the Lorenz system.
 
     Arguments:
     t_tot -- simulation time (in seconds)
@@ -95,6 +95,8 @@ def print_progress(perc):
     sys.stdout.flush()
 
 def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+    """ Apply next_state_vector L times."""
+
     x_cur = np.copy(x)
     y_cur = np.copy(y)
     z_cur = np.copy(z)
@@ -137,13 +139,12 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma
         for i in range(n):
             weights[i] = scipy.stats.norm.pdf(x_tilde[t, i], xs_m[t],
                                               sigma_m)
-            weights = abs(weights)
-            weights /= sum(weights)
+
+        weights /= sum(weights)
 
         for i in range(n):
             wxs[:, t] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
                                           z_tilde[t, i]])
-
 
         # Resample the particles according to the weights
         ind_sample = np.random.choice(np.arange(n), n, True, weights)

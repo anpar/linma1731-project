@@ -70,31 +70,20 @@ def plot_mes_vs_real(export=False, filename='q2-mes-vs-real.pdf'):
         fig.savefig(PATH + filename)
 
 def plot_samples_hist(export=False, filename='q3-samples-hist.pdf'):
-    t_tot = 5
+    t_tot = 16
     dt = 0.001
     ts = 0.01
     L = int(ts/dt)
 
     xs, ys, zs = simulate(t_tot)
-    print(len(xs))
     xs_m = measure(xs, L)
-    print(len(xs_m))
 
     x_tilde, _, _, wxs = classical_smc(xs_m, t_tot, L)
-    #print(x_tilde[int(5/ts), :])
-    #print(xs[int(5/dt)])
+    print(x_tilde[int(5/ts), :])
+    print(xs[int(5/dt)])
 
-    a = np.arange(0, int(t_tot/dt) + 1, 1)
-    x = np.array([xs[:-1:L], ys[:-1:L], zs[:-1:L]])
-    print(wxs)
-    print(np.linalg.norm(x-wxs, axis=0))
-    plt.plot(a[:-1:L], np.linalg.norm(x-wxs, axis=0), color='b')
-    plt.show()
-    """
-    result = plt.hist(np.around(x_tilde[int(5/ts), :], 4), bins=20, color='b',
-                     align='mid')
-    plt.axvline(np.mean(x_tilde[int(5/ts), :]), color='k', linestyle='dashed',
-                                linewidth=2)
+    result = plt.hist(x_tilde[int(5/ts), :], color='b', align='mid')
+    plt.axvline(np.mean(x_tilde[int(5/ts), :]), color='k', linestyle='dashed', linewidth=2)
     plt.axvline(xs[int(5/dt)], color='g', linestyle='dashed', linewidth=2)
     plt.show()
 
@@ -109,9 +98,7 @@ def plot_samples_hist(export=False, filename='q3-samples-hist.pdf'):
                                 linewidth=2)
     plt.axvline(xs[int(15/dt)], color='g', linestyle='dashed', linewidth=2)
     plt.show()
-    """
 
-    """
     a = np.arange(0, int(t_tot/dt) + 1, 1)
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label='First coordinate trajectory (real)')
@@ -127,7 +114,7 @@ def plot_samples_hist(export=False, filename='q3-samples-hist.pdf'):
         label.set_linewidth(1.5)
 
     plt.show()
-    """
+
 def main():
     #plot_3d_trajectory(False)
     #plot_mes_vs_real(False)
