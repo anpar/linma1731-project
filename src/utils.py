@@ -154,3 +154,61 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma
         z_tilde[t, :] = z_tilde[t, ind_sample]
 
     return x_tilde, y_tilde, z_tilde, wxs
+
+def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
+    j = [
+        [1. - a*dt, a*dt,  0.],
+        [(r-z)*dt,  1-dt, -x*dt],
+        [y*dt,      x*dt,  1-b*dt]
+    ]
+
+    return np.matrix(j)
+
+def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+        ts=0.01, Gamma=np.eye(3)):
+    """Extended Kalman Filter"""
+
+    n_iter = len(xs_m)
+    assert n_iter == int(t_tot/ts)
+
+    x_predicted = [np.zeros((3, 1)) for _ in range(n_iter+1)]
+    x_updated   = [np.zeros((3, 1)) for _ in range(n_iter)]
+
+    cov_predicted = [np.zeros((3,3)) for _ in range(n_iter+1)]
+    cov_updated   = [np.zeros((3,3)) for _ in range(n_iter)]
+
+    # Initializing
+    x_predicted[0] = np.matrix([[mu_0], [mu_0], [mu_0]])
+    cov_predicted[0] = Gamma * sigma_0**2
+
+    H = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+    # Loop on time
+    for t in range(n_iter):
+        #print_progress(t/n_iter * 100.0)
+
+        ## Update for t
+
+        # Computing K_t
+        K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + Gamma*sigma_m**2)
+
+        # Updating x_t|t
+        x_updated[t] = x_predicted[t] + K @ (np.matrix([ [xs_m[t] - x_predicted[t][0,0]], [0], [0]]))
+        # Updating P_t|t
+        cov_updated[t] = cov_predicted[t] - K @ H @ cov_predicted[t]
+
+        ## Prediction for t+1
+
+        # Computing x_(t+1)|t
+        x = x_updated[t][0,0]
+        y = x_updated[t][1,0]
+        z = x_updated[t][2,0]
+
+        x_tilde, y_tilde, z_tilde = next_state_vector(x, y, z)
+        x_predicted[t+1] = np.array([[x_tilde], [y_tilde], [z_tilde]])
+
+        # Computing P_(t+1)|t
+        F = next_state_jacobian(x,y,z)
+        cov_predicted[t+1] = F * cov_updated[t] * np.transpose(F) + H*sigma_m**2
+
+    return x_updated
