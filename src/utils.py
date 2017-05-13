@@ -183,6 +183,10 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
 
     H = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
 
+    eps = np.finfo(np.float32).eps
+    sigma_u = 100000*eps
+    sigma_u = 0.35 # TODO works best with this value ...
+
     # Loop on time
     for t in range(n_iter):
         #print_progress(t/n_iter * 100.0)
@@ -190,7 +194,9 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
         ## Update for t
 
         # Computing K_t
-        K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + Gamma*sigma_m**2)
+        #K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + H*sigma_m**2)
+        K_x = cov_predicted[t][0,0] / (cov_predicted[t][0,0] + sigma_m**2)
+        K = np.array([ [K_x, 0, 0], [0, 0, 0], [0, 0, 0] ])
 
         # Updating x_t|t
         x_updated[t] = x_predicted[t] + K @ (np.matrix([ [xs_m[t] - x_predicted[t][0,0]], [0], [0]]))
@@ -204,11 +210,11 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
         y = x_updated[t][1,0]
         z = x_updated[t][2,0]
 
-        x_tilde, y_tilde, z_tilde = next_state_vector(x, y, z)
+        x_tilde, y_tilde, z_tilde = next_state_vector(x, y, z, Gamma=np.zeros((3,3)))
         x_predicted[t+1] = np.array([[x_tilde], [y_tilde], [z_tilde]])
 
         # Computing P_(t+1)|t
         F = next_state_jacobian(x,y,z)
-        cov_predicted[t+1] = F * cov_updated[t] * np.transpose(F) + H*sigma_m**2
+        cov_predicted[t+1] = F @ cov_updated[t] @ np.transpose(F) + Gamma* sigma_u**2
 
     return x_updated
