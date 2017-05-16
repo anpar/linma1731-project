@@ -30,7 +30,7 @@ def F(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return (f1, f2, f3)
 
-def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, sigma_u=0.01, Gamma=np.eye(3)):
     """Return the state vector at instant k+1 from the one at instant k.
     A small Gaussian noise of variance equal to 10*eps is added on the
     dynamics.
@@ -42,12 +42,11 @@ def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
     Gamma -- matrix multiplying the noise vector (default np.eye(3))
     """
 
-    eps = np.finfo(np.float32).eps
-    u = np.random.normal(0, 100000*eps, 3)
+    u = np.random.normal(0, 0.01, 3)
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
-def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.001, sigma_u=0.01,Gamma=np.eye(3)):
     """Simulate the Lorenz system.
 
     Arguments:
@@ -70,7 +69,7 @@ def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.00
     for i in range(n_iter):
         xs[i], ys[i], zs[i] = x, y, z
 
-        x, y, z = next_state_vector(x, y, z, a, r, b, dt, Gamma)
+        x, y, z = next_state_vector(x, y, z, a, r, b, dt, Gamma=Gamma, sigma_u=sigma_u)
 
     return (xs, ys, zs)
 
@@ -103,7 +102,7 @@ def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)
 
     for i in range(L):
         x_cur, y_cur, z_cur = next_state_vector(x_cur, y_cur, z_cur, a, r, b,
-                                                dt, Gamma)
+                                                dt, Gamma=Gamma)
 
     return x_cur, y_cur, z_cur
 
@@ -164,7 +163,7 @@ def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return np.matrix(j)
 
-def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, sigma_u=0.01, dt=0.001,
         ts=0.01, Gamma=np.eye(3)):
     """Extended Kalman Filter"""
 
@@ -179,13 +178,9 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
 
     # Initializing
     x_predicted[0] = np.matrix([[mu_0], [mu_0], [mu_0]])
-    cov_predicted[0] = Gamma * sigma_0**2
+    cov_predicted[0] = np.matrix(Gamma) * sigma_0**2
 
-    H = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
-
-    eps = np.finfo(np.float32).eps
-    sigma_u = 100000*eps
-    sigma_u = 0.35 # TODO works best with this value ...
+    H = np.matrix([[1, 0, 0]])
 
     # Loop on time
     for t in range(n_iter):
@@ -195,13 +190,12 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
 
         # Computing K_t
         #K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + H*sigma_m**2)
-        K_x = cov_predicted[t][0,0] / (cov_predicted[t][0,0] + sigma_m**2)
-        K = np.array([ [K_x, 0, 0], [0, 0, 0], [0, 0, 0] ])
+        K = cov_predicted[t] @ np.transpose(H) / (cov_predicted[t][0,0] + sigma_m**2)
 
         # Updating x_t|t
-        x_updated[t] = x_predicted[t] + K @ (np.matrix([ [xs_m[t] - x_predicted[t][0,0]], [0], [0]]))
+        x_updated[t] = x_predicted[t] + K * (xs_m[t] - x_predicted[t][0,0])
         # Updating P_t|t
-        cov_updated[t] = cov_predicted[t] - K @ H @ cov_predicted[t]
+        cov_updated[t] = cov_predicted[t] - K @ H * cov_predicted[t]
 
         ## Prediction for t+1
 
