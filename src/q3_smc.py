@@ -23,7 +23,7 @@ def plot_hist(x, xs, dt, ts, filename):
     plt.axvline(xs[int(15/dt)], color='g', linestyle='dashed', linewidth=2)
 
     if filename is not None:
-        fig.savefig(PATH + filename)
+        fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
 
 def plot_particles(x_tilde, y_tilde, z_tilde, x, y, z, xs_m, wxs, t, ts,
                    filename):
@@ -48,7 +48,7 @@ def plot_particles(x_tilde, y_tilde, z_tilde, x, y, z, xs_m, wxs, t, ts,
         label.set_linewidth(1.5)
 
     if filename is not None:
-        fig.savefig(PATH + filename)
+        fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
 
     plt.close(fig)
 
@@ -71,7 +71,7 @@ def plot_trajectory(L, t_tot, dt, xs, xs_m, wxs, label, filename):
         label.set_linewidth(1.5)
 
     if filename is not None:
-        fig.savefig(PATH + filename)
+        fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
 
     plt.close(fig)
 
@@ -118,7 +118,7 @@ def plot_smc(a, r, b, dt, ts, t_tot, mu_0, sigma_0, sigma_u, Gamma,
         label.set_linewidth(1.5)
 
     if filename[2] is not None:
-        fig.savefig(PATH + filename[2])
+        fig.savefig(PATH + filename[2], bbox_inches='tight', pad_inches=0)
 
     plt.close(fig)
 
@@ -140,12 +140,14 @@ def main():
     r = 28
     b = 8/3
 
+    sigma_u = math.sqrt(0.01)
+
     filename = ["hist-x-50.pdf", "hist-y-50.pdf", "error-50.pdf",
                "particles-5-50.pdf", "particles-15-50.pdf",
                 "x-trajectory-50.pdf", "y-trajectory-50.pdf",
                 "z-trajectory-50.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=50,
              filename=filename)
 
@@ -154,7 +156,7 @@ def main():
                 "x-trajectory-100.pdf", "y-trajectory-100.pdf",
                 "z-trajectory-100.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
@@ -164,7 +166,7 @@ def main():
                 "x-trajectory-100-s0-high.pdf", "y-trajectory-100-s0-high.pdf",
                 "z-trajectory-100-s0-high.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(64), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(64), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
@@ -174,7 +176,7 @@ def main():
                 "x-trajectory-100-sm-low.pdf", "y-trajectory-100-sm-low.pdf",
                 "z-trajectory-100-sm-low.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(0.001), n=100,
              filename=filename)
 
@@ -184,7 +186,7 @@ def main():
                 "x-trajectory-100-tsdt1.pdf", "y-trajectory-100-tsdt1.pdf",
                 "z-trajectory-100-tsdt1.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.001, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
@@ -194,7 +196,7 @@ def main():
                 "x-trajectory-100-tsdt100.pdf", "y-trajectory-100-tsdt100.pdf",
                 "z-trajectory-100-tsdt100.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.1, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
@@ -203,7 +205,7 @@ def main():
                 "x-trajectory-1000.pdf", "y-trajectory-1000.pdf",
                 "z-trajectory-1000.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=math.sqrt(0.01),
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
              filename=filename)
 
