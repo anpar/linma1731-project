@@ -190,32 +190,14 @@ def plot_ekf(export=False, filename='q6-samples-ekf.pdf'):
     t_tot = 16
     dt = 0.001
     ts = 0.01
+    sigma_u = 10
     L = int(ts/dt)
 
     xs, ys, zs = simulate(t_tot)
     xs_m = measure(xs, L)
 
-    x_tilde = np.array([X[0] for X in ekf(xs_m, t_tot, L)])
-    print(x_tilde[int(5/ts), :])
-    print(xs[int(5/dt)])
-
-    result = plt.hist(x_tilde[int(5/ts), :], color='b', align='mid')
-    plt.axvline(np.mean(x_tilde[int(5/ts), :]), color='k', linestyle='dashed', linewidth=2)
-    plt.axvline(xs[int(5/dt)], color='g', linestyle='dashed', linewidth=2)
-    plt.show()
-
-    result = plt.hist(x_tilde[int(10/ts), :], bins=20, color='b')
-    plt.axvline(np.mean(x_tilde[int(10/ts), :]), color='k', linestyle='dashed',
-                                linewidth=2)
-    plt.axvline(xs[int(10/dt)], color='g', linestyle='dashed', linewidth=2)
-    plt.show()
-
-    result = plt.hist(x_tilde[int(15/ts), :], bins=20, color='b')
-    plt.axvline(np.mean(x_tilde[int(15/ts), :]), color='k', linestyle='dashed',
-                                linewidth=2)
-    plt.axvline(xs[int(15/dt)], color='g', linestyle='dashed', linewidth=2)
-    plt.show()
-
+    x_tilde = np.array([X[0] for X in ekf(xs_m, t_tot, L, sigma_u=sigma_u)])
+    
     a = np.arange(0, int(t_tot/dt) + 1, 1)
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label='First coordinate trajectory (real)')
