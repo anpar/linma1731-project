@@ -171,17 +171,17 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
 def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
     j = [
         [1. - a*dt, a*dt,  0.],
-        [(r-z)*dt,  1-dt, -x*dt],
+        [(r-z)*dt,  1, -x*dt],
         [y*dt,      x*dt,  1-b*dt]
     ]
 
     return np.matrix(j)
 
-def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, sigma_u=0.01, dt=0.001,
-        ts=0.01, Gamma=np.eye(3)):
+def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma):
     """Extended Kalman Filter"""
 
     n_iter = len(xs_m)
+    print(n_iter, t_tot, ts)
     assert n_iter == int(t_tot/ts)
 
     x_predicted = [np.zeros((3, 1)) for _ in range(n_iter+1)]
@@ -198,15 +198,14 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, sigm
 
     # Loop on time
     for t in range(n_iter):
-        #print_progress(t/n_iter * 100.0)
-
         ## Update for t
 
         # Computing K_t
-        #K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + H*sigma_m**2)
+
         K = cov_predicted[t] @ np.transpose(H) / (cov_predicted[t][0,0] + sigma_m**2)
 
         # Updating x_t|t
+
         x_updated[t] = x_predicted[t] + K * (xs_m[t] - x_predicted[t][0,0])
         # Updating P_t|t
         cov_updated[t] = cov_predicted[t] - K @ H * cov_predicted[t]
@@ -218,11 +217,11 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, sigm
         y = x_updated[t][1,0]
         z = x_updated[t][2,0]
 
-        x_tilde, y_tilde, z_tilde = next_state_vector(x, y, z, Gamma=np.zeros((3,3)))
+        x_tilde, y_tilde, z_tilde = next_state_vector(x, y, z, a, r, b, ts, sigma_u, np.zeros((3,3)))
         x_predicted[t+1] = np.array([[x_tilde], [y_tilde], [z_tilde]])
 
         # Computing P_(t+1)|t
-        F = next_state_jacobian(x,y,z)
+        F = next_state_jacobian(x,y,z,ts)
         cov_predicted[t+1] = F @ cov_updated[t] @ np.transpose(F) + Gamma* sigma_u**2
 
     return x_updated
