@@ -3,25 +3,29 @@ import math
 import numpy as np
 import scipy.stats
 
-def get_init_pos(mu_0=1, sigma_0=math.sqrt(0.001)):
+"""
+    IMPORTANT NOTE: all sigma_X are STANDARD DEVIATION
+    (and not variances)
+"""
+
+def get_init_pos(mu_0, sigma_0):
     """Return initial position of the Lorenz system.
 
     Arguments:
-    mu_0 -- mean of the Gaussian distribution (default (1,1,1))
-    sigma_0 -- standard deviation of the Gaussian distribution (default
-    math.sqrt(0.001))
+    mu_0 -- mean of the Gaussian distribution
+    sigma_0 -- standard deviation of the Gaussian distribution
     """
 
     return np.random.normal(mu_0, sigma_0, 3)
 
-def F(x, y, z, a=10, r=28, b=8/3, dt=0.001):
+def F(x, y, z, a, r, b, dt):
     """Compute the function F of the discrete-time version of the Lorenz
     system using first-order forward finite difference.
 
     Arguments:
     x, y, z -- system state vector (particle position)
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
+    a, r, b -- system parameters
+    dt -- time step
     """
 
     f1 = a*y*dt + (1-a*dt)*x
@@ -30,35 +34,39 @@ def F(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return (f1, f2, f3)
 
-def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def next_state_vector(x, y, z, a, r, b, dt, sigma_u, Gamma):
     """Return the state vector at instant k+1 from the one at instant k.
-    A small Gaussian noise of variance equal to 10*eps is added on the
+    A small Gaussian noise of variance equal to sigma_u is added on the
     dynamics.
 
     Arguments:
     x, y, z -- system state vector (particle position)
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
-    Gamma -- matrix multiplying the noise vector (default np.eye(3))
+    a, r, b -- system parameters
+    dt -- time step
+    Gamma -- matrix multiplying the noise vector
     """
 
+<<<<<<< HEAD
     eps = np.finfo(np.float32).eps
     u = np.random.normal(0, 100000*eps, 3)
     u = np.random.normal(0, 0.35, 3)
+=======
+    u = np.random.normal(0, sigma_u, 3)
+>>>>>>> 4ee54eb2ea751bf2f00d00baa9c94c3207a92de4
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
-def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def simulate(t_tot, mu_0, sigma_0, a, r, b, dt, sigma_u, Gamma):
     """Simulate the Lorenz system.
 
     Arguments:
     t_tot -- simulation time (in seconds)
-    mu_0 -- mean of the Gaussian distribution of the initial position (default (1,1,1))
+    mu_0 -- mean of the Gaussian distribution of the initial position
     sigma_0 -- standard deviation of the Gaussian distribution of the initial
-    position (default math.sqrt(0.001))
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
-    Gamma -- matrix multiplying the noise vector (default np.eye(3))
+    position
+    a, r, b -- system parameters
+    dt -- time step
+    Gamma -- matrix multiplying the noise vector
     """
 
     n_iter = int(t_tot/dt) + 1
@@ -71,11 +79,11 @@ def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.00
     for i in range(n_iter):
         xs[i], ys[i], zs[i] = x, y, z
 
-        x, y, z = next_state_vector(x, y, z, a, r, b, dt, Gamma)
+        x, y, z = next_state_vector(x, y, z, a, r, b, dt, sigma_u, Gamma)
 
     return (xs, ys, zs)
 
-def measure(xs, L, sigma_m=1):
+def measure(xs, L, sigma_m):
     """Take noisy measurements with a sampling period ts
     from the proces xs.
 
@@ -84,18 +92,19 @@ def measure(xs, L, sigma_m=1):
     = simulate(t_tot, dt=dt)
     L -- downsampling factor (equal to the sampling period divided by the time
     step)
-    sigma_m -- standard deviation of the measurement noise (default 1)
+    sigma_m -- standard deviation of the measurement noise
     """
 
     xs_m = xs[:-1:L]
+    n = np.random.normal(0, sigma_m, len(xs_m))
 
-    return xs_m + np.random.normal(0, sigma_m, len(xs_m))
+    return xs_m + n
 
 def print_progress(perc):
     sys.stdout.write("\r%0.2f%%" % perc)
     sys.stdout.flush()
 
-def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def next_state_vector_L(x, y, z, L, a, r, b, dt, sigma_u, Gamma):
     """ Apply next_state_vector L times."""
 
     x_cur = np.copy(x)
@@ -104,28 +113,36 @@ def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)
 
     for i in range(L):
         x_cur, y_cur, z_cur = next_state_vector(x_cur, y_cur, z_cur, a, r, b,
-                                                dt, Gamma)
+                                                dt, sigma_u, Gamma)
 
     return x_cur, y_cur, z_cur
 
-def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
-                  ts=0.01, Gamma=np.eye(3)):
+def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
+                  t_tot, xs_m, sigma_m, n):
     """Classical Sequential Monte Carlo."""
+
+    L = int(ts/dt)
 
     n_iter = len(xs_m)
     assert n_iter == int(t_tot/ts)
 
-    x_tilde = np.empty((n_iter, n))
-    y_tilde = np.empty((n_iter, n))
-    z_tilde = np.empty((n_iter, n))
-    weights = np.empty(n)
+    # Particles
+    x = np.zeros((n_iter, n))
+    y = np.zeros((n_iter, n))
+    z = np.zeros((n_iter, n))
+    # Predictions
+    x_tilde = np.zeros((n_iter, n))
+    y_tilde = np.zeros((n_iter, n))
+    z_tilde = np.zeros((n_iter, n))
+    # Importance resampling weights
+    weights = np.zeros(n)
 
     # Generates initial sample sets
-    x_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
-    y_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
-    z_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
+    x[0, :] = np.random.normal(mu_0, sigma_0, n)
+    y[0, :] = np.random.normal(mu_0, sigma_0, n)
+    z[-2, :] = np.random.normal(mu_0, sigma_0, n)
 
-    wxs = np.zeros((3, n_iter))
+    wxs = np.zeros((n_iter, 3))
 
     # Loop on time
     for t in range(1, n_iter):
@@ -134,27 +151,28 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma
         # Prediction
         for i in range(n):
             x_tilde[t, i], y_tilde[t, i], z_tilde[t, i] = \
-            next_state_vector_L(x_tilde[t-1, i], y_tilde[t-1, i],
-                                z_tilde[t-1, i], L)
-        # Correction
-        for i in range(n):
-            weights[i] = scipy.stats.norm.pdf(x_tilde[t, i], xs_m[t],
-                                              sigma_m)
+            next_state_vector_L(x[t-1, i], y[t-1, i], z[t-1, i], L, a, r, b,
+                               dt, sigma_u, Gamma)
 
-        weights /= sum(weights)
-
+        # Computing weights for importance resampling
         for i in range(n):
-            wxs[:, t] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
-                                          z_tilde[t, i]])
+            weights[i] = scipy.stats.norm.pdf(xs_m[t] - x_tilde[t, i], 0, sigma_m)
+
+        weights = weights/sum(weights)
+
+        # Weighted average, used as estimate
+        for i in range(n):
+            wxs[t, :] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
+                                                z_tilde[t, i]])
 
         # Resample the particles according to the weights
-        ind_sample = np.random.choice(np.arange(n), n, True, weights)
+        ind_sample = np.random.choice(n, n, replace=True, p=weights)
 
-        x_tilde[t, :] = x_tilde[t, ind_sample]
-        y_tilde[t, :] = y_tilde[t, ind_sample]
-        z_tilde[t, :] = z_tilde[t, ind_sample]
+        x[t, :] = x_tilde[t, ind_sample]
+        y[t, :] = y_tilde[t, ind_sample]
+        z[t, :] = z_tilde[t, ind_sample]
 
-    return x_tilde, y_tilde, z_tilde, wxs
+    return x_tilde, y_tilde, z_tilde, x, y, z, wxs
 
 def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
     j = [
@@ -165,7 +183,7 @@ def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return np.matrix(j)
 
-def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, sigma_u=0.01, dt=0.001,
         ts=0.01, Gamma=np.eye(3)):
     """Extended Kalman Filter"""
 
@@ -180,13 +198,9 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
 
     # Initializing
     x_predicted[0] = np.matrix([[mu_0], [mu_0], [mu_0]])
-    cov_predicted[0] = Gamma * sigma_0**2
+    cov_predicted[0] = np.matrix(Gamma) * sigma_0**2
 
-    H = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
-
-    eps = np.finfo(np.float32).eps
-    sigma_u = 100000*eps
-    sigma_u = 0.35 # TODO works best with this value ...
+    H = np.matrix([[1, 0, 0]])
 
     # Loop on time
     for t in range(n_iter):
@@ -196,13 +210,12 @@ def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0
 
         # Computing K_t
         #K = cov_predicted[t] @ np.transpose(H) @ np.linalg.inv(H @ cov_predicted[t] @ np.transpose(H) + H*sigma_m**2)
-        K_x = cov_predicted[t][0,0] / (cov_predicted[t][0,0] + sigma_m**2)
-        K = np.array([ [K_x, 0, 0], [0, 0, 0], [0, 0, 0] ])
+        K = cov_predicted[t] @ np.transpose(H) / (cov_predicted[t][0,0] + sigma_m**2)
 
         # Updating x_t|t
-        x_updated[t] = x_predicted[t] + K @ (np.matrix([ [xs_m[t] - x_predicted[t][0,0]], [0], [0]]))
+        x_updated[t] = x_predicted[t] + K * (xs_m[t] - x_predicted[t][0,0])
         # Updating P_t|t
-        cov_updated[t] = cov_predicted[t] - K @ H @ cov_predicted[t]
+        cov_updated[t] = cov_predicted[t] - K @ H * cov_predicted[t]
 
         ## Prediction for t+1
 
