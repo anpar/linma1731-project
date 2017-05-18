@@ -32,7 +32,7 @@ def plot_3d_trajectory(export=False, filename='q2-3d-trajectory.pdf'):
     #plt.show()
 
     if export:
-        fig.savefig(PATH + filename)
+        fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
 
 def main():
     plot_3d_trajectory(True)

@@ -1,12 +1,14 @@
 \documentclass[english, DIV=13]{scrartcl}
 
 % Packages
+\input{lib.tex}
+\usepackage{placeins}
 \usepackage{pgfplots}
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{empheq}
 \usepackage{hyperref}
 \usepackage{todonotes}
-
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
 \renewcommand{\vec}[1]{\mathbf{#1}}
 
 \title{LINMA1731 - Project}
@@ -42,25 +44,101 @@ can be obtained. In this case, the function $F$ is given by
 A sample trajectory resulting from a 50 seconds simulation is given in figure~
 \ref{fig:q2-3d-trajectory}. As expected for this set of paramaters, the trajectory
 is chaotic and shows the typical ``figure eigth'' form. 
-
-\begin{figure}[ht!]
-    \centering
-    \includegraphics[width=0.75\textwidth]{figures/q2-3d-trajectory}
-    \caption{Realization of a 50 seconds simulated trajectory. The initial
-    position is indicated by the green dot. The resulting trajectory is chaotic
-    (as expected for this set of paramaters).}
-    \label{fig:q2-3d-trajectory}
-\end{figure}
-
 The trajectory of the first coordinates and the corresponding noisy measurements
 are represented in figure~\ref{fig:q2-mes-vs-real}.
 
-\begin{figure}[ht!]
+\begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/q2-mes-vs-real}
-    \caption{Trajectory of the first coordinates and corresponding noisy measurements.}
-    \label{fig:q2-mes-vs-real}
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/q2-3d-trajectory}
+        \caption{Realization of a 50 seconds simulated trajectory. The initial
+        position is indicated by the green dot. The resulting trajectory is chaotic
+        (as expected for this set of paramaters).}
+        \label{fig:q2-3d-trajectory}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/q2-mes-vs-real}
+        \caption{Trajectory of the first coordinates and corresponding noisy
+        measurements with $\sigma^2_m = 1$.}
+        \label{fig:q2-mes-vs-real}
+    \end{subfigure}
+    \caption{Simulations and measurements.}
 \end{figure}
+
+\FloatBarrier
+
+\section{Sequential Monte Carlo}
+\subsection{Observation}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/hist-x-100}
+        \caption{Histogram of samples distributions in $x_k$.}
+        \label{fig:q3-hist-x-100}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/hist-y-100}
+        \caption{Histogram of samples distributions in $y_k$.}
+        \label{fig:q3-hist-y-100}
+    \end{subfigure}
+    \caption{Histogram of samples distributions  at time $t = 0, 5, 15$
+    (from left to right) for 100 particles. The dashed green lines represent the real
+    values.}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/error-50}
+        \caption{For $n=50$ particles.} 
+        \label{fig:q3-error-50}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/error-100}
+        \caption{For $n=100$ particles.} 
+        \label{fig:q3-error-100}
+    \end{subfigure}\\
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/error-1000}
+        \caption{For $n=1000$ particles.} 
+        \label{fig:q3-error-1000}
+    \end{subfigure}
+    \caption{Error as a function of time for different numbers of particles. The blue
+    lines correspond to $\norm{\mathbf{x}_t^{\text{real}} - \sum_{i=1}^n
+    w_t^i\tilde{\mathbf{x}}_t^i}_2$.
+    The mean error on the first coordinate has also been plotted.}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/particles-5-100}
+        \caption{At $t=5$.}
+        \label{fig:particle-5-100}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/particles-5-100}
+        \caption{At $t=15$.}
+        \label{fig:particle-15-100}
+    \end{subfigure}
+    \caption{Particles before and after resampling for 100 particles.}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Experiments}
+\paragraph{Effect of $\sigma^2_0$}
+\paragraph{Effect of $\sigma^2_u$}
+\paragraph{Effect of $\sigma^2_m$}
+\paragraph{Effect of $\delta t$ and $\Delta t$}
+\paragraph{Effect of $\Gamma$}
+
+\subsection{Results on the given dataset}
 
 
 \section{Implementation of an Extended Kalman Filter}
