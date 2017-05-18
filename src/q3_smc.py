@@ -57,9 +57,9 @@ def plot_trajectory(L, t_tot, dt, xs, xs_m, wxs, label, filename):
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label=label + 'coordinate trajectory (real)')
     if xs_m is not None:
-        ax.plot(a[:-1:L], xs_m, 'g.', label='Noisy measurements', markersize=4.0)
+        ax.plot(a[::L], xs_m, 'g.', label='Noisy measurements', markersize=4.0)
 
-    ax.plot(a[:-1:L], wxs, 'rx', label='CSMC output',
+    ax.plot(a[::L], wxs, 'rx', label='CSMC output',
             markersize=3.0)
 
     legend = ax.legend(loc='upper right')
@@ -96,19 +96,20 @@ def plot_smc(a, r, b, dt, ts, t_tot, mu_0, sigma_0, sigma_u, Gamma,
 
     # Error function
     fig, ax = plt.subplots()
-    x_real = np.empty((int(t_tot/ts), 3))
-    x_real[:, 0] = xs[:-1:L]
-    x_real[:, 1] = ys[:-1:L]
-    x_real[:, 2] = zs[:-1:L]
+    x_real = np.empty((int(t_tot/ts)+1, 3))
+    x_real[:, 0] = xs[::L]
+    x_real[:, 1] = ys[::L]
+    x_real[:, 2] = zs[::L]
 
     a = np.arange(0, int(t_tot/dt) + 1, 1)
     err = np.linalg.norm(x_real - wxs, axis=1)
-    plt.plot(a[:-1:L], err, 'b', label="Global error")
+    plt.plot(a[::L], err, 'b', label="Global error")
     plt.axhline(np.mean(err), color='b', linestyle='dashed',
                 label="Mean global error")
     err_x = np.abs(x_real[:, 0] - wxs[:, 0])
     plt.axhline(np.mean(err_x), color='g', linestyle='dashed',
                 label="Mean error on x")
+    #plt.ylim(0, 6)
 
     legend = ax.legend(loc='upper right')
     for label in legend.get_texts():
@@ -142,6 +143,7 @@ def main():
 
     sigma_u = math.sqrt(0.01)
 
+    """
     filename = ["hist-x-50.pdf", "hist-y-50.pdf", "error-50.pdf",
                "particles-5-50.pdf", "particles-15-50.pdf",
                 "x-trajectory-50.pdf", "y-trajectory-50.pdf",
@@ -207,6 +209,17 @@ def main():
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
              sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
+             filename=filename)
+    """
+    filename = ["hist-x-100-gamma.pdf", "hist-y-100-gamma.pdf",
+                "error-100-gamma.pdf",
+               "particles-5-100-gamma.pdf", "particles-15-100-gamma.pdf",
+                "x-trajectory-100-gamma.pdf", "y-trajectory-100-gamma.pdf",
+                "z-trajectory-100-gamma.pdf"]
+    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
+             Gamma=np.ones((3, 3))/math.sqrt(3),
+             sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
 if __name__ == "__main__":

@@ -89,7 +89,7 @@ def measure(xs, L, sigma_m):
     sigma_m -- standard deviation of the measurement noise
     """
 
-    xs_m = xs[:-1:L]
+    xs_m = xs[::L]
     n = np.random.normal(0, sigma_m, len(xs_m))
 
     return xs_m + n
@@ -118,7 +118,7 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
     L = int(ts/dt)
 
     n_iter = len(xs_m)
-    assert n_iter == int(t_tot/ts)
+    assert n_iter == int(t_tot/ts) + 1
 
     # Particles
     x = np.zeros((n_iter, n))
@@ -134,7 +134,7 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
     # Generates initial sample sets
     x[0, :] = np.random.normal(mu_0, sigma_0, n)
     y[0, :] = np.random.normal(mu_0, sigma_0, n)
-    z[-2, :] = np.random.normal(mu_0, sigma_0, n)
+    z[0, :] = np.random.normal(mu_0, sigma_0, n)
 
     wxs = np.zeros((n_iter, 3))
 
