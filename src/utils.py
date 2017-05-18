@@ -3,25 +3,29 @@ import math
 import numpy as np
 import scipy.stats
 
-def get_init_pos(mu_0=1, sigma_0=math.sqrt(0.001)):
+"""
+    IMPORTANT NOTE: all sigma_X are STANDARD DEVIATION
+    (and not variances)
+"""
+
+def get_init_pos(mu_0, sigma_0):
     """Return initial position of the Lorenz system.
 
     Arguments:
-    mu_0 -- mean of the Gaussian distribution (default (1,1,1))
-    sigma_0 -- standard deviation of the Gaussian distribution (default
-    math.sqrt(0.001))
+    mu_0 -- mean of the Gaussian distribution
+    sigma_0 -- standard deviation of the Gaussian distribution
     """
 
     return np.random.normal(mu_0, sigma_0, 3)
 
-def F(x, y, z, a=10, r=28, b=8/3, dt=0.001):
+def F(x, y, z, a, r, b, dt):
     """Compute the function F of the discrete-time version of the Lorenz
     system using first-order forward finite difference.
 
     Arguments:
     x, y, z -- system state vector (particle position)
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
+    a, r, b -- system parameters
+    dt -- time step
     """
 
     f1 = a*y*dt + (1-a*dt)*x
@@ -30,33 +34,33 @@ def F(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return (f1, f2, f3)
 
-def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, sigma_u=0.01, Gamma=np.eye(3)):
+def next_state_vector(x, y, z, a, r, b, dt, sigma_u, Gamma):
     """Return the state vector at instant k+1 from the one at instant k.
-    A small Gaussian noise of variance equal to 10*eps is added on the
+    A small Gaussian noise of variance equal to sigma_u is added on the
     dynamics.
 
     Arguments:
     x, y, z -- system state vector (particle position)
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
-    Gamma -- matrix multiplying the noise vector (default np.eye(3))
+    a, r, b -- system parameters
+    dt -- time step
+    Gamma -- matrix multiplying the noise vector
     """
 
-    u = np.random.normal(0, 0.01, 3)
+    u = np.random.normal(0, sigma_u, 3)
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
-def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.001, sigma_u=0.01,Gamma=np.eye(3)):
+def simulate(t_tot, mu_0, sigma_0, a, r, b, dt, sigma_u, Gamma):
     """Simulate the Lorenz system.
 
     Arguments:
     t_tot -- simulation time (in seconds)
-    mu_0 -- mean of the Gaussian distribution of the initial position (default (1,1,1))
+    mu_0 -- mean of the Gaussian distribution of the initial position
     sigma_0 -- standard deviation of the Gaussian distribution of the initial
-    position (default math.sqrt(0.001))
-    a, r, b -- system parameters (default 10, 28, 8/3)
-    dt -- time step (default 0.001)
-    Gamma -- matrix multiplying the noise vector (default np.eye(3))
+    position
+    a, r, b -- system parameters
+    dt -- time step
+    Gamma -- matrix multiplying the noise vector
     """
 
     n_iter = int(t_tot/dt) + 1
@@ -69,11 +73,11 @@ def simulate(t_tot, mu_0=1, sigma_0=math.sqrt(0.001), a=10, r=28, b=8/3, dt=0.00
     for i in range(n_iter):
         xs[i], ys[i], zs[i] = x, y, z
 
-        x, y, z = next_state_vector(x, y, z, a, r, b, dt, Gamma=Gamma, sigma_u=sigma_u)
+        x, y, z = next_state_vector(x, y, z, a, r, b, dt, sigma_u, Gamma)
 
     return (xs, ys, zs)
 
-def measure(xs, L, sigma_m=1):
+def measure(xs, L, sigma_m):
     """Take noisy measurements with a sampling period ts
     from the proces xs.
 
@@ -82,7 +86,7 @@ def measure(xs, L, sigma_m=1):
     = simulate(t_tot, dt=dt)
     L -- downsampling factor (equal to the sampling period divided by the time
     step)
-    sigma_m -- standard deviation of the measurement noise (default 1)
+    sigma_m -- standard deviation of the measurement noise
     """
 
     xs_m = xs[:-1:L]
@@ -94,7 +98,7 @@ def print_progress(perc):
     sys.stdout.write("\r%0.2f%%" % perc)
     sys.stdout.flush()
 
-def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
+def next_state_vector_L(x, y, z, L, a, r, b, dt, sigma_u, Gamma):
     """ Apply next_state_vector L times."""
 
     x_cur = np.copy(x)
@@ -103,13 +107,15 @@ def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)
 
     for i in range(L):
         x_cur, y_cur, z_cur = next_state_vector(x_cur, y_cur, z_cur, a, r, b,
-                                                dt, Gamma=Gamma)
+                                                dt, sigma_u, Gamma)
 
     return x_cur, y_cur, z_cur
 
-def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=0.001, sigma_m=1.0, dt=0.001,
-                  ts=0.01, Gamma=np.eye(3)):
+def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
+                  t_tot, xs_m, sigma_m, n):
     """Classical Sequential Monte Carlo."""
+
+    L = int(ts/dt)
 
     n_iter = len(xs_m)
     assert n_iter == int(t_tot/ts)
@@ -128,7 +134,7 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=0.001, sigma_m=1.0, dt=
     # Generates initial sample sets
     x[0, :] = np.random.normal(mu_0, sigma_0, n)
     y[0, :] = np.random.normal(mu_0, sigma_0, n)
-    z[0, :] = np.random.normal(mu_0, sigma_0, n)
+    z[-2, :] = np.random.normal(mu_0, sigma_0, n)
 
     wxs = np.zeros((n_iter, 3))
 
@@ -139,9 +145,8 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=0.001, sigma_m=1.0, dt=
         # Prediction
         for i in range(n):
             x_tilde[t, i], y_tilde[t, i], z_tilde[t, i] = \
-            next_state_vector_L(x[t-1, i] + np.random.normal(0, 0.1),
-                                y[t-1, i] + np.random.normal(0, 0.1),
-                                z[t-1, i] + np.random.normal(0, 0.1), L)
+            next_state_vector_L(x[t-1, i], y[t-1, i], z[t-1, i], L, a, r, b,
+                               dt, sigma_u, Gamma)
 
         # Computing weights for importance resampling
         for i in range(n):
