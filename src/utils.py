@@ -42,8 +42,7 @@ def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
     Gamma -- matrix multiplying the noise vector (default np.eye(3))
     """
 
-    eps = np.finfo(np.float32).eps
-    u = np.random.normal(0, 100000*eps, 3)
+    u = np.random.normal(0, 1e-12, 3)
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
@@ -87,8 +86,9 @@ def measure(xs, L, sigma_m=1):
     """
 
     xs_m = xs[:-1:L]
+    n = np.random.normal(0, sigma_m, len(xs_m))
 
-    return xs_m + np.random.normal(0, sigma_m, len(xs_m))
+    return xs_m + n
 
 def print_progress(perc):
     sys.stdout.write("\r%0.2f%%" % perc)
@@ -107,24 +107,30 @@ def next_state_vector_L(x, y, z, L, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)
 
     return x_cur, y_cur, z_cur
 
-def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=0.001, sigma_m=1.0, dt=0.001,
                   ts=0.01, Gamma=np.eye(3)):
     """Classical Sequential Monte Carlo."""
 
     n_iter = len(xs_m)
     assert n_iter == int(t_tot/ts)
 
-    x_tilde = np.empty((n_iter, n))
-    y_tilde = np.empty((n_iter, n))
-    z_tilde = np.empty((n_iter, n))
-    weights = np.empty(n)
+    # Particles
+    x = np.zeros((n_iter, n))
+    y = np.zeros((n_iter, n))
+    z = np.zeros((n_iter, n))
+    # Predictions
+    x_tilde = np.zeros((n_iter, n))
+    y_tilde = np.zeros((n_iter, n))
+    z_tilde = np.zeros((n_iter, n))
+    # Importance resampling weights
+    weights = np.zeros(n)
 
     # Generates initial sample sets
-    x_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
-    y_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
-    z_tilde[0, :] = np.random.normal(mu_0, sigma_0, n)
+    x[0, :] = np.random.normal(mu_0, sigma_0, n)
+    y[0, :] = np.random.normal(mu_0, sigma_0, n)
+    z[0, :] = np.random.normal(mu_0, sigma_0, n)
 
-    wxs = np.zeros((3, n_iter))
+    wxs = np.zeros((n_iter, 3))
 
     # Loop on time
     for t in range(1, n_iter):
@@ -133,27 +139,29 @@ def classical_smc(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma
         # Prediction
         for i in range(n):
             x_tilde[t, i], y_tilde[t, i], z_tilde[t, i] = \
-            next_state_vector_L(x_tilde[t-1, i], y_tilde[t-1, i],
-                                z_tilde[t-1, i], L)
-        # Correction
-        for i in range(n):
-            weights[i] = scipy.stats.norm.pdf(x_tilde[t, i], xs_m[t],
-                                              sigma_m)
+            next_state_vector_L(x[t-1, i] + np.random.normal(0, 0.1),
+                                y[t-1, i] + np.random.normal(0, 0.1),
+                                z[t-1, i] + np.random.normal(0, 0.1), L)
 
-        weights /= sum(weights)
-
+        # Computing weights for importance resampling
         for i in range(n):
-            wxs[:, t] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
-                                          z_tilde[t, i]])
+            weights[i] = scipy.stats.norm.pdf(xs_m[t] - x_tilde[t, i], 0, sigma_m)
+
+        weights = weights/sum(weights)
+
+        # Weighted average, used as estimate
+        for i in range(n):
+            wxs[t, :] += weights[i] * np.array([x_tilde[t, i], y_tilde[t, i],
+                                                z_tilde[t, i]])
 
         # Resample the particles according to the weights
-        ind_sample = np.random.choice(np.arange(n), n, True, weights)
+        ind_sample = np.random.choice(n, n, replace=True, p=weights)
 
-        x_tilde[t, :] = x_tilde[t, ind_sample]
-        y_tilde[t, :] = y_tilde[t, ind_sample]
-        z_tilde[t, :] = z_tilde[t, ind_sample]
+        x[t, :] = x_tilde[t, ind_sample]
+        y[t, :] = y_tilde[t, ind_sample]
+        z[t, :] = z_tilde[t, ind_sample]
 
-    return x_tilde, y_tilde, z_tilde, wxs
+    return x_tilde, y_tilde, z_tilde, x, y, z, wxs
 
 def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
     j = [
@@ -164,7 +172,7 @@ def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return np.matrix(j)
 
-def ekf(xs_m, t_tot, L, n=100, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
+def ekf(xs_m, t_tot, L, n=200, mu_0=1, sigma_0=math.sqrt(0.001), sigma_m=1, dt=0.001,
         ts=0.01, Gamma=np.eye(3)):
     """Extended Kalman Filter"""
 
