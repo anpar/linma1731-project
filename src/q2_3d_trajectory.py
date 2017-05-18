@@ -29,13 +29,13 @@ def plot_3d_trajectory(export=False, filename='q2-3d-trajectory.pdf'):
     ax.set_zlabel('z')
     ax.scatter(xs[0], ys[0], zs[0], color='g')
     ax.plot(xs, ys, zs)
-    plt.show()
+    #plt.show()
 
     if export:
         fig.savefig(PATH + filename)
 
 def main():
-    plot_3d_trajectory(False)
+    plot_3d_trajectory(True)
 
 if __name__ == "__main__":
     main()

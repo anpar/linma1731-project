@@ -38,13 +38,13 @@ def plot_mes_vs_real(export=False, filename='q2-mes-vs-real.pdf'):
     for label in legend.get_lines():
         label.set_linewidth(1.5)
 
-    plt.show()
+    #plt.show()
 
     if export:
         fig.savefig(PATH + filename)
 
 def main():
-    plot_mes_vs_real(False)
+    plot_mes_vs_real(True)
 
 if __name__ == "__main__":
     main()
