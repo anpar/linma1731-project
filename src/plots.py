@@ -125,6 +125,7 @@ def plot_ekf(export=False, filename='q6-samples-ekf.pdf'):
     xs_m = measure(xs, L)
 
     x_tilde = np.array([X[0] for X in ekf(xs_m, t_tot, L)])
+    """
     print(x_tilde[int(5/ts), :])
     print(xs[int(5/dt)])
 
@@ -144,7 +145,7 @@ def plot_ekf(export=False, filename='q6-samples-ekf.pdf'):
                                 linewidth=2)
     plt.axvline(xs[int(15/dt)], color='g', linestyle='dashed', linewidth=2)
     plt.show()
-
+    """
     a = np.arange(0, int(t_tot/dt) + 1, 1)
     fig, ax = plt.subplots()
     ax.plot(a, xs, 'b', label='First coordinate trajectory (real)')

@@ -44,6 +44,7 @@ def next_state_vector(x, y, z, a=10, r=28, b=8/3, dt=0.001, Gamma=np.eye(3)):
 
     eps = np.finfo(np.float32).eps
     u = np.random.normal(0, 100000*eps, 3)
+    u = np.random.normal(0, 0.35, 3)
 
     return F(x, y, z, a, r, b, dt) + Gamma.dot(u)
 
