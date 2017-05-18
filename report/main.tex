@@ -81,7 +81,7 @@ In order to linearize this system, we need to compute the jacobian of $F$, for e
 F_k = 
     \begin{pmatrix}
         1 - a \delta t & a \delta t & 0 \\
-        (r - z_k) \delta t & 1 & - x_k \delta t \\
+        (r - z_k) \delta t & 1 - \delta t & - x_k \delta t \\
         y_k \delta t & x_k \delta t & 1 - b \delta t
     \end{pmatrix}
 \end{equation*}

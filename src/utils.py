@@ -181,6 +181,7 @@ def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma):
     """Extended Kalman Filter"""
 
     n_iter = len(xs_m)
+    print(n_iter, t_tot, ts)
     assert n_iter == int(t_tot/ts)
 
     x_predicted = [np.zeros((3, 1)) for _ in range(n_iter+1)]
