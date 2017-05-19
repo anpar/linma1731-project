@@ -13,7 +13,7 @@
 \renewcommand{\vec}[1]{\mathbf{#1}}
 
 \title{LINMA1731 - Project}
-\author{Antoine Paris\and Matthieu Xhonneux}
+\author{Antoine Paris\and Mathieu Xhonneux}
 \date{\today}
 
 \begin{document}
@@ -52,6 +52,7 @@ with $\sigma^2_m = 1$ are represented in figure~\ref{fig:q2-mes-vs-real}.
         measurements with $\sigma^2_m = 1$.}
         \label{fig:q2-mes-vs-real}
     \end{subfigure}
+
     \caption{Simulations and measurements.}
 \end{figure}
 
@@ -145,7 +146,7 @@ means a better ability to cope with large fluctuations in the dynamics of the sy
         \label{fig:q3-error-1000}
     \end{subfigure}
     \caption{Error as a function of time for different numbers of particles. The blue
-    lines correspond toi
+    lines correspond to
     $\norm{\mathbf{x}_t^{\text{real}} - \sum_{i=1}^n w_t^i\tilde{\mathbf{x}}_t^i}_2$.
     The mean error on the first coordinate has also been plotted.}
 \end{figure}
@@ -302,5 +303,57 @@ The updated estimation can then be computed as usual :
 \[ \vec{\hat{x}}_{k|k} = \vec{\hat{x}}_{k|k-1} + \vec{K}_k (m_k  - \vec{H} ~ \vec{\hat{x}}_{k|k-1}) \]
 \[ \vec{P}_{k|k} = \vec{P}_{k|k-1} - \vec{K}_k ~ \vec{H} ~ \vec{P}_{k|k-1} \]
 
+Figure \ref{fig:ekf-results} shows two realizations of our Extended Kalman Filter with $\sigma_u^2 = 0.01$, more precisely the trajectories of the $x$ coordinate and the error values (the same error metric has been used as for the particle filtering).\\
+
+Notice that one filtering succeeds quite well, whereas the second one fails for the time steps in the range $[1300, 1500]$. This emphasizes that the algorithm doesn't always converge as well as the particle filter. Besides, the mean errors, even for the best realization, clearly indicate that the EKF yields less good results than particle filtering (of about one order of magnitude). This said, it is important to stress that the EKF runs significantly faster than the particle filter.
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/ekf-good-x-trajectory}
+        \caption{Trajectory of the $x$ coordinate - Good filtering} 
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/ekf-bad-x-trajectory}
+        \caption{Trajectory of the $y$ coordinate - Bad filtering} 
+    \end{subfigure}\\
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/ekf-good-error}
+        \caption{Error values - Good filtering} 
+    \end{subfigure}
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/ekf-bad-error}
+        \caption{Error values - Bad filtering} 
+    \end{subfigure}\\
+
+    \caption{Trajectories and error values for two realizations of the EKF}
+    \label{fig:ekf-results}
+\end{figure}
+
+\section{Distributions comparison}
+
+Figure \ref{fig:space-cdf} shows the space distributions for both CSMC and EKF filtering. TODO COMMENT.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/distrib-x}
+        \caption{Space distribution for $x$ coordinate} 
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/distrib-y}
+        \caption{Space distribution for $y$ coordinate} 
+    \end{subfigure}%
+    \\
+    \begin{subfigure}{0.49\textwidth}
+        \includegraphics[width=\textwidth]{figures/distrib-z}
+        \caption{Space distribution for $z$ coordinate} 
+    \end{subfigure}%
+    
+    \caption{Space CDF distributions for CSMC and EKF filtering at $t = 5$s}
+    \label{fig:space-cdf}
+\end{figure}
 
 \end{document}

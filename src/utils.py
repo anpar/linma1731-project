@@ -112,7 +112,7 @@ def next_state_vector_L(x, y, z, L, a, r, b, dt, sigma_u, Gamma):
     return x_cur, y_cur, z_cur
 
 def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
-                  t_tot, xs_m, sigma_m, n):
+                  t_tot, xs_m, sigma_m, n, particles_at=None):
     """Classical Sequential Monte Carlo."""
 
     L = int(ts/dt)
@@ -166,6 +166,9 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
         y[t, :] = y_tilde[t, ind_sample]
         z[t, :] = z_tilde[t, ind_sample]
 
+        if particles_at == t:
+            return [ x[t,:], y[t, :], z[t, :] ]
+
     return x_tilde, y_tilde, z_tilde, x, y, z, wxs
 
 def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
@@ -177,11 +180,10 @@ def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
 
     return np.matrix(j)
 
-def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma):
+def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma, cov_at=None):
     """Extended Kalman Filter"""
 
     n_iter = len(xs_m)
-    print(n_iter, t_tot, ts)
     assert n_iter == int(t_tot/ts)
 
     x_predicted = [np.zeros((3, 1)) for _ in range(n_iter+1)]
@@ -209,6 +211,9 @@ def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma):
         x_updated[t] = x_predicted[t] + K * (xs_m[t] - x_predicted[t][0,0])
         # Updating P_t|t
         cov_updated[t] = cov_predicted[t] - K @ H * cov_predicted[t]
+
+        if cov_at == t:
+            return x_updated[t], cov_updated[t]
 
         ## Prediction for t+1
 

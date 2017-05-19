@@ -3,11 +3,11 @@ from utils import simulate, measure, ekf
 from matplotlib import pyplot as plt
 
 import numpy as np
-import math
+import math, sys
 
 PATH='../report/figures/'
 
-def plot_ekf(export=False, filename=None):
+def plot_ekf(filename=[None, None]):
     t_tot = 16
     ts = 0.01
     mu_0, sigma_0 = 1, math.sqrt(0.001)
@@ -17,7 +17,7 @@ def plot_ekf(export=False, filename=None):
     Gamma = np.eye(3)
 
     xs, ys, zs = simulate(t_tot, mu_0, sigma_0, a, r, b, ts, sigma_u, Gamma)
-    xs_m = measure(xs, 1, sigma_m)
+    xs_m = measure(xs, 1, sigma_m)[:-1]
 
     wxs = np.matrix([[X[0,0], X[1,0], X[2,0]] for X in ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma)])
     x_tilde = wxs[:,0]
@@ -36,6 +36,9 @@ def plot_ekf(export=False, filename=None):
     for label in legend.get_lines():
         label.set_linewidth(1.5)
 
+    if filename[0] is not None:
+        fig.savefig(PATH + filename[0])
+
     plt.show()
 
 
@@ -45,7 +48,6 @@ def plot_ekf(export=False, filename=None):
     x_real[:, 0] = xs[:-1:]
     x_real[:, 1] = ys[:-1:]
     x_real[:, 2] = zs[:-1:]
-    print(x_real)
 
     a = np.arange(0, int(t_tot/ts) + 1, 1)
     err = np.linalg.norm(x_real - wxs, axis=1)
@@ -63,15 +65,20 @@ def plot_ekf(export=False, filename=None):
     for label in legend.get_lines():
         label.set_linewidth(1.5)
 
-    if filename is not None:
-        fig.savefig(PATH + filename[2])
+    if filename[1] is not None:
+        fig.savefig(PATH + filename[1])
 
     plt.show()
     #plt.close(fig)
 
 
 def main():
-    plot_ekf()
+    if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] not in ("good", "bad")):
+        print("Please specify which dataset you want to write: 'good' or 'bad'")
+        print(">>> python q6_ekf.py xxxx")
+        sys.exit(1)
+
+    plot_ekf(filename=['ekf-{}-x-trajectory.pdf'.format(sys.argv[1]), 'ekf-{}-error.pdf'.format(sys.argv[1])])
 
 if __name__ == "__main__":
     main()
