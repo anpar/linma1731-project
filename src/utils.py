@@ -172,6 +172,8 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
     return x_tilde, y_tilde, z_tilde, x, y, z, wxs
 
 def jacobian(x, y, z, a, r, b, dt):
+    """Return the Jacobian of the function F."""
+
     J = [[1. - a*dt, a*dt, 0.],
         [(r-z)*dt,  1-dt, -x*dt],
         [y*dt, x*dt, 1-b*dt]]
@@ -180,6 +182,7 @@ def jacobian(x, y, z, a, r, b, dt):
 
 def ekf(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
          t_tot, xs_m, sigma_m):
+    """Extended Kalman Filter (EKF)."""
 
     L = int(ts/dt)
 

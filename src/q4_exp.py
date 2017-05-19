@@ -144,99 +144,16 @@ def main():
     sigma_u = math.sqrt(0.01)
 
     filename = [None]*8
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=50,
-             filename=filename)
 
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
-             filename=filename)
-
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
-             filename=filename)
-    """
-    filename = ["hist-x-50.pdf", "hist-y-50.pdf", "error-50.pdf",
-               "particles-5-50.pdf", "particles-15-50.pdf",
-                "x-trajectory-50.pdf", "y-trajectory-50.pdf",
-                "z-trajectory-50.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=50,
-             filename=filename)
-
-    filename = ["hist-x-100.pdf", "hist-y-100.pdf", "error-100.pdf",
-               "particles-5-100.pdf", "particles-15-100.pdf",
-                "x-trajectory-100.pdf", "y-trajectory-100.pdf",
-                "z-trajectory-100.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
-             filename=filename)
-
-    filename = ["hist-x-100-s0-high.pdf", "hist-y-100-s0-high.pdf",
-                "error-100-s0-high.pdf",
-               "particles-5-100-s0-high.pdf", "particles-15-100-s0-high.pdf",
-                "x-trajectory-100-s0-high.pdf", "y-trajectory-100-s0-high.pdf",
-                "z-trajectory-100-s0-high.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
              sigma_0=math.sqrt(64), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
              filename=filename)
 
-    filename = ["hist-x-100-sm-low.pdf", "hist-y-100-sm-low.pdf",
-                "error-100-sm-low.pdf",
-               "particles-5-100-sm-low.pdf", "particles-15-100-sm-low.pdf",
-                "x-trajectory-100-sm-low.pdf", "y-trajectory-100-sm-low.pdf",
-                "z-trajectory-100-sm-low.pdf"]
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
              sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(0.001), n=100,
              filename=filename)
-
-    filename = ["hist-x-100-tsdt1.pdf", "hist-y-100-tsdt1.pdf",
-                "error-100-tsdt1.pdf",
-               "particles-5-100-tsdt1.pdf", "particles-15-100-tsdt1.pdf",
-                "x-trajectory-100-tsdt1.pdf", "y-trajectory-100-tsdt1.pdf",
-                "z-trajectory-100-tsdt1.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.001, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
-             filename=filename)
-
-    filename = ["hist-x-100-tsdt100.pdf", "hist-y-100-tsdt100.pdf",
-                "error-100-tsdt100.pdf",
-               "particles-5-100-tsdt100.pdf", "particles-15-100-tsdt100.pdf",
-                "x-trajectory-100-tsdt100.pdf", "y-trajectory-100-tsdt100.pdf",
-                "z-trajectory-100-tsdt100.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.1, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
-             filename=filename)
-
-    filename = ["hist-x-1000.pdf", "hist-y-1000.pdf", "error-1000.pdf",
-               "particles-5-1000.pdf", "particles-15-1000.pdf",
-                "x-trajectory-1000.pdf", "y-trajectory-1000.pdf",
-                "z-trajectory-1000.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
-             filename=filename)
-
-    filename = ["hist-x-100-gamma.pdf", "hist-y-100-gamma.pdf",
-                "error-100-gamma.pdf",
-               "particles-5-100-gamma.pdf", "particles-15-100-gamma.pdf",
-                "x-trajectory-100-gamma.pdf", "y-trajectory-100-gamma.pdf",
-                "z-trajectory-100-gamma.pdf"]
-    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
-             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
-             Gamma=np.ones((3, 3))/math.sqrt(3),
-             sigma_m=math.sqrt(1), n=100,
-             filename=filename)
-    """
 
 if __name__ == "__main__":
     main()

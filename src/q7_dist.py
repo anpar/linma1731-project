@@ -16,7 +16,7 @@ sigma_u = math.sqrt(0.01)
 sigma_m = math.sqrt(1)
 a, r, b = 10, 28, 8/3
 Gamma = np.eye(3)
-n = 10000
+n = 10000   # reduce this value if you don't have too much time
 dimensions = ('x','y','z')
 
 def ekf_distribs(xs_m):
@@ -64,8 +64,8 @@ def main():
         for label in legend.get_lines():
             label.set_linewidth(1.5)
 
-        fig.savefig(PATH + "distrib-{}.pdf".format(dimensions[k]),
-                    bbox_inches='tight', pad_inches=0)
+        #fig.savefig(PATH + "distrib-{}.pdf".format(dimensions[k]),
+        #            bbox_inches='tight', pad_inches=0)
 
         plt.show()
 

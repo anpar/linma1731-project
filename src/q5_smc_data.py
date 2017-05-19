@@ -33,10 +33,9 @@ def plot_trajectory(L, t_tot, dt, ts, xs_m, wxs, x, label, filename):
     if filename is not None:
         fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
 
-    plt.close(fig)
+    #plt.close(fig)
 
 def plot_smc(n, filename):
-
     t_tot = 10
     dt = 0.001
     ts = 0.01
@@ -56,12 +55,17 @@ def plot_smc(n, filename):
     plot_trajectory(L, t_tot, dt, ts, xs_m, wxs[:, 0], x, 'x-', filename[0])
     plot_trajectory(L, t_tot, dt, ts, None, wxs[:, 1], y, 'y-', filename[1])
     plot_trajectory(L, t_tot, dt, ts, None, wxs[:, 2], z, 'z-', filename[2])
+    plt.show()
 
 def main():
+    filename = [None]*3
+    plot_smc(n=100, filename=filename)
+
+    """
     filename = ["x-trajectory-data.pdf", "y-trajectory-data.pdf",
                 "z-trajectory-data.pdf"]
     plot_smc(n=1000, filename=filename)
-
+    """
 
 if __name__ == "__main__":
     main()

@@ -79,9 +79,14 @@ def plot_ekf(filename):
     plt.show()
 
 def main():
+    filename = [None]*4
+    plot_ekf(filename)
+
+    """
     filename = ["ekf-trajectory-x.pdf", "ekf-trajectory-y", "ekf-trajectory-z",
                "ekf-error.pdf"]
     plot_ekf(filename)
+    """
 
 if __name__ == "__main__":
     main()
