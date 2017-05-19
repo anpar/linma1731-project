@@ -171,10 +171,10 @@ def classical_smc(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
 
     return x_tilde, y_tilde, z_tilde, x, y, z, wxs
 
-def next_state_jacobian(x, y, z, a=10, r=28, b=8/3, dt=0.001):
+def next_state_jacobian(x, y, z, a, r, b, dt):
     j = [
         [1. - a*dt, a*dt,  0.],
-        [(r-z)*dt,  1, -x*dt],
+        [(r-z)*dt,  1-dt, -x*dt],
         [y*dt,      x*dt,  1-b*dt]
     ]
 
@@ -230,3 +230,53 @@ def ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma, cov_at
         cov_predicted[t+1] = F @ cov_updated[t] @ np.transpose(F) + Gamma* sigma_u**2
 
     return x_updated
+
+def jacobian(x, y, z, a, r, b, dt):
+    J = [[1. - a*dt, a*dt, 0.],
+        [(r-z)*dt,  1-dt, -x*dt],
+        [y*dt, x*dt, 1-b*dt]]
+
+    return np.array(J)
+
+def ekf2(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
+         t_tot, xs_m, sigma_m):
+
+    L = int(ts/dt)
+
+    n_iter = len(xs_m)
+    assert n_iter == int(t_tot/ts) + 1
+
+    # Set up
+    Q = (sigma_u)**2 * Gamma
+
+    # Predicted mean/covariance
+    mu_pred = np.zeros((n_iter, 3))
+    cov_pred = np.zeros((n_iter, 3, 3))
+
+    # Updated mean/covariance
+    mu = np.zeros((n_iter, 3))
+    cov = np.zeros((n_iter, 3, 3))
+
+    # Initial values, t = 0
+    mu[0] = np.array([mu_0]*3)
+    cov[0] = (sigma_0)**2 * np.eye(3)
+
+    for t in range(n_iter-1):
+        # Prediction for time t+1
+        x, y, z = mu[t]
+        c = cov[t]
+        # We must apply the Jacobian L times
+        for i in range(L):
+            J = jacobian(x, y, z, a, r, b, dt)
+            x, y, z = J.dot([x, y, z])
+            c = (J.dot(c)).dot(J.transpose()) + (Gamma.dot(Q)).dot(Gamma)
+
+        mu_pred[t+1, 0], mu_pred[t+1, 1], mu_pred[t+1, 2] = x, y, z
+        cov_pred[t+1] = c
+
+        # Correction using measurements at time t+1
+        K = cov_pred[t+1][:, 0] / ((sigma_m**2) + cov_pred[t+1][0, 0])
+        mu[t+1] = mu_pred[t+1] + K * (xs_m[t+1] - mu_pred[t+1, 0])
+        cov[t+1] = cov_pred[t+1] - K.dot(cov_pred[t+1][0, :])
+
+    return mu, cov

@@ -60,6 +60,7 @@ with $\sigma^2_m = 1$ are represented in figure~\ref{fig:q2-mes-vs-real}.
 
 \section{Sequential Monte Carlo}
 \subsection{Particles distribution}
+\label{sec:particles-distri}
 Histograms of the samples distribution in $x_k$ and $y_t$ for $t = 5, 10, 15$ are
 given in figures~\ref{fig:q3-hist-x-100} and \ref{fig:q3-hist-y-100} respectively
 (after resampling). These two figures shows that the particles tend to be normally
@@ -259,9 +260,8 @@ figures~\ref{fig:x-trajectory-data}, \ref{fig:y-trajectory-data} and
 \FloatBarrier
 
 \section{Implementation of an Extended Kalman Filter}
-
-The Extended Kalman Filter amounts to applying a regular Kalman filter to the linearization of the system. Our system can be represented as :
-
+The Extended Kalman Filter amounts to applying a regular Kalman filter to the
+linearization of the system. Our system can be represented as :
 
 \begin{equation*}
     \begin{cases}
@@ -270,42 +270,49 @@ The Extended Kalman Filter amounts to applying a regular Kalman filter to the li
     \end{cases}.
 \end{equation*}
 
-In order to linearize this system, we need to compute the jacobian of $F$, for each time step $k$ :
-
+In order to linearize this system, the Jacobian of $F$ evaluated at the current
+predicted state needs to be computed. For each time step $k$, this can be written as
 \begin{equation*}
-F_k = 
+    F_k = 
     \begin{pmatrix}
         1 - a \delta t & a \delta t & 0 \\
         (r - z_k) \delta t & 1 - \delta t & - x_k \delta t \\
-        y_k \delta t & x_k \delta t & 1 - b \delta t
+        y_k \delta t & x_k \delta t & 1 - b \delta t.
     \end{pmatrix}
 \end{equation*}
-
-We can then directly apply the Kalman Filter's equations. For prediction :
-
-
+With $x_0 \sim\mathcal{N}(\vec{\mu}_0, \vec{P}_0 = \sigma^2_0\vec{I}_3)$, $u_k
+\sim\mathcal{N}(\vec{0}, \vec{Q} = \vec{\Gamma}\sigma^2_u)$ and $w_k
+\sim\mathcal{N}(0, R = \sigma^2_m)$, the linearized system is also Gaussian.
+The Kalman Filter's equations can thus directly
+be applied. The prediction step is written as follows:
 \[ \vec{\hat{x}}_{k|k-1} = F(\vec{x}_{k-1|k-1}) \]
-\[ \vec{P}_{k|k-1} = \vec{F}_{k-1} \vec{P}_{k-1|k-1} \vec{F}_{k-1}^\mathsf{T} + \vec{Q} \]
-
-with $\vec{Q} = \vec{\Gamma} \sigma_u^2$ the covariance matrix of the dynamics' noise.\\
-For the update :
-
-\[ \vec{K}_k = \vec{P}_{k|k-1} \vec{H}^\mathsf{T} (\vec{H} ~ \vec{P}_{k|k-1} \vec{H}^\mathsf{T} + R)^{-1} \]
-
-with $R = \sigma_m^2$ and $\vec{H} = 
+\[ \vec{P}_{k|k-1} = \vec{F}_{k-1} \vec{P}_{k-1|k-1} \vec{F}_{k-1}^\mathsf{T} + \vec{Q}.
+\]
+The Kalman gain, used in the update step is given by
+\[ \vec{K}_k = \vec{P}_{k|k-1} \vec{H}^\mathsf{T} (\vec{H} ~ \vec{P}_{k|k-1}
+\vec{H}^\mathsf{T} + R)^{-1} \]
+where $\vec{H} = 
     \begin{pmatrix}
         1 & 0 & 0 \\
     \end{pmatrix}
 $.\\
-The updated estimation can then be computed as usual :
-
-
-\[ \vec{\hat{x}}_{k|k} = \vec{\hat{x}}_{k|k-1} + \vec{K}_k (m_k  - \vec{H} ~ \vec{\hat{x}}_{k|k-1}) \]
+The updated estimation can then be computed as usual, that is
+\[ \vec{\hat{x}}_{k|k} = \vec{\hat{x}}_{k|k-1} + \vec{K}_k (m_k  - \vec{H} ~
+\vec{\hat{x}}_{k|k-1}) \]
 \[ \vec{P}_{k|k} = \vec{P}_{k|k-1} - \vec{K}_k ~ \vec{H} ~ \vec{P}_{k|k-1} \]
 
-Figure \ref{fig:ekf-results} shows two realizations of our Extended Kalman Filter with $\sigma_u^2 = 0.01$, more precisely the trajectories of the $x$ coordinate and the error values (the same error metric has been used as for the particle filtering).\\
+Figure \ref{fig:ekf-results} shows two realizations of our Extended Kalman Filter with
+$\sigma_u^2 = 0.01$, more precisely two trajectories of the $x$ coordinate and the
+corresponding estimation errors (the same error metric has been used as for the particle
+filtering).\\
 
-Notice that one filtering succeeds quite well, whereas the second one fails for the time steps in the range $[1300, 1500]$. This emphasizes that the algorithm doesn't always converge as well as the particle filter. Besides, the mean errors, even for the best realization, clearly indicate that the EKF yields less good results than particle filtering (of about one order of magnitude). This said, it is important to stress that the EKF runs significantly faster than the particle filter.
+Notice that one filtering succeeds quite well, whereas the second one fails for the time
+steps in the range $[1300, 1500]$. This emphasizes that the algorithm doesn't always
+converge as well as the particle filter. Besides, the mean errors, even for the best
+realization, clearly indicate that the EKF yields less good results than particle
+filtering (of about one order of magnitude). That being said, it is important to stress
+that the EKF runs significantly faster than the particle filter.
+
 \begin{figure}
     \centering
     \begin{subfigure}{0.49\textwidth}
@@ -332,8 +339,11 @@ Notice that one filtering succeeds quite well, whereas the second one fails for 
 \end{figure}
 
 \section{Distributions comparison}
-
-Figure \ref{fig:space-cdf} shows the space distributions for both CSMC and EKF filtering. TODO COMMENT.
+Figure \ref{fig:space-cdf} shows the state space distributions for both CSMC and EKF
+filtering. In both cases, cumulative distributive functions have the
+typical form of a Normal distribution. This was already observed in
+section~\ref{sec:particles-distri} on the histograms for CSMS and was totally expected
+for EKF by design of the Kalman filter.
 
 \begin{figure}
     \centering
