@@ -7,56 +7,64 @@ import math, sys
 
 PATH='../report/figures/'
 
-def plot_ekf(filename=[None, None]):
+def plot_trajectory(L, t_tot, dt, xs, xs_m, mu, label, filename):
+    a = np.arange(0, int(t_tot/dt) + 1, 1)
+    fig, ax = plt.subplots()
+    ax.plot(a, xs, 'b', label=label + 'coordinate trajectory (real)')
+    if xs_m is not None:
+        ax.plot(a[::L], xs_m, 'g.', label='Noisy measurements', markersize=4.0)
+
+    ax.plot(a[::L], mu, 'rx', label='EKF output', markersize=3.0)
+
+    legend = ax.legend(loc='upper right')
+
+    for label in legend.get_texts():
+         label.set_fontsize('large')
+
+    for label in legend.get_lines():
+        label.set_linewidth(1.5)
+
+    if filename is not None:
+        fig.savefig(PATH + filename, bbox_inches='tight', pad_inches=0)
+
+def plot_ekf(filename):
     t_tot = 16
     ts = 0.01
-    mu_0, sigma_0 = 1, math.sqrt(0.001)
+    dt = 0.001
+    L = int(ts/dt)
+    mu_0 = 1
+    sigma_0 = math.sqrt(0.001)
     sigma_u = math.sqrt(0.01)
     sigma_m = math.sqrt(1)
     a, r, b = 10, 28, 8/3
     Gamma = np.eye(3)
 
-    xs, ys, zs = simulate(t_tot, mu_0, sigma_0, a, r, b, ts, sigma_u, Gamma)
-    xs_m = measure(xs, 1, sigma_m)[:-1]
+    xs, ys, zs = simulate(t_tot, mu_0, sigma_0, a, r, b, dt, sigma_u, Gamma)
+    xs_m = measure(xs, L, sigma_m)
 
-    wxs = np.matrix([[X[0,0], X[1,0], X[2,0]] for X in ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts, Gamma)])
-    x_tilde = wxs[:,0]
+    mu, cov = ekf(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts, t_tot, xs_m,
+                  sigma_m)
 
-    a = np.arange(0, len(xs_m) + 1, 1)
-    fig, ax = plt.subplots()
-    ax.plot(a, xs, 'b', label='First coordinate trajectory (real)')
-    ax.plot(a[:-1], xs_m, 'g.', label='Noisy measurements', markersize=4.0)
-    ax.plot(a[:-1], np.mean(x_tilde, axis=1), 'rx', label='EKF output',
-            markersize=4.0)
-    legend = ax.legend(loc='upper right')
+    print(cov[int(5/ts)][0,0])
 
-    for label in legend.get_texts():
-         label.set_fontsize('large')
-
-    for label in legend.get_lines():
-        label.set_linewidth(1.5)
-
-    if filename[0] is not None:
-        fig.savefig(PATH + filename[0])
-
-    plt.show()
-
+    plot_trajectory(L, t_tot, dt, xs, xs_m, mu[:, 0], 'x', filename[0])
+    plot_trajectory(L, t_tot, dt, ys, None, mu[:, 1], 'y', filename[1])
+    plot_trajectory(L, t_tot, dt, zs, None, mu[:, 2], 'z', filename[2])
 
     # Error function
     fig, ax = plt.subplots()
-    x_real = np.empty((int(t_tot/ts), 3))
-    x_real[:, 0] = xs[:-1:]
-    x_real[:, 1] = ys[:-1:]
-    x_real[:, 2] = zs[:-1:]
+    x_real = np.empty((int(t_tot/ts)+1, 3))
+    x_real[:, 0] = xs[::L]
+    x_real[:, 1] = ys[::L]
+    x_real[:, 2] = zs[::L]
 
-    a = np.arange(0, int(t_tot/ts) + 1, 1)
-    err = np.linalg.norm(x_real - wxs, axis=1)
-    plt.plot(a[:-1], err, 'b', label="Global error")
-    plt.axhline(np.mean(err), color='b', linestyle='dashed',
-                label="Mean global error")
-    err_x = np.abs(x_real[:, 0] - wxs[:, 0])
-    plt.axhline(np.mean(err_x), color='g', linestyle='dashed',
-                label="Mean error on x")
+    a = np.arange(0, int(t_tot/dt) + 1, 1)
+    err = np.linalg.norm(x_real - mu, axis=1)
+    plt.plot(a[::L], err, 'b', label="Global error")
+    plt.axhline(np.mean(err), color='b', linestyle='dashed', label="Mean global error")
+    err_x = np.abs(x_real[:, 0] - mu[:, 0])
+    plt.axhline(np.mean(err_x), color='g', linestyle='dashed', label="Mean error on x")
+    plt.ylim(0, 6)
 
     legend = ax.legend(loc='upper right')
     for label in legend.get_texts():
@@ -65,20 +73,15 @@ def plot_ekf(filename=[None, None]):
     for label in legend.get_lines():
         label.set_linewidth(1.5)
 
-    if filename[1] is not None:
-        fig.savefig(PATH + filename[1])
+    if filename[3] is not None:
+        fig.savefig(PATH + filename[3], bbox_inches='tight', pad_inches=0)
 
     plt.show()
-    #plt.close(fig)
-
 
 def main():
-    if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] not in ("good", "bad")):
-        print("Please specify which dataset you want to write: 'good' or 'bad'")
-        print(">>> python q6_ekf.py xxxx")
-        sys.exit(1)
-
-    plot_ekf(filename=['ekf-{}-x-trajectory.pdf'.format(sys.argv[1]), 'ekf-{}-error.pdf'.format(sys.argv[1])])
+    filename = ["ekf-trajectory-x.pdf", "ekf-trajectory-y", "ekf-trajectory-z",
+               "ekf-error.pdf"]
+    plot_ekf(filename)
 
 if __name__ == "__main__":
     main()

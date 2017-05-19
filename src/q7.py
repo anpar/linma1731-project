@@ -10,28 +10,29 @@ PATH='../report/figures/'
 t_tot = 16
 ts = 0.01
 dt = 0.001
-mu_0, sigma_0 = 1, math.sqrt(0.001)
+mu_0 = 1
+sigma_0 = math.sqrt(0.001)
 sigma_u = math.sqrt(0.01)
 sigma_m = math.sqrt(1)
 a, r, b = 10, 28, 8/3
 Gamma = np.eye(3)
-n = 100
+n = 10000
 dimensions = ('x','y','z')
 
 def ekf_distribs(xs_m):
-    pos, cov = ekf(xs_m, t_tot, a, r, b, mu_0, sigma_0, sigma_m, sigma_u, ts,
-                   Gamma, cov_at=5/ts)
+    pos, cov = ekf(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
+                    t_tot, xs_m, sigma_m)
 
-    print(pos.shape)
+    u = pos[int(5/ts)]
+    s = cov[int(5/ts)]
+
     distribs = [None]*3
     for k in range(3):
-        distribs[k] = np.random.normal(pos[k, 0], math.sqrt(cov[k,k]), n)
+        distribs[k] = np.random.normal(u[k], math.sqrt(s[k, k]), n)
 
     return distribs
 
 def csmc_distribs(xs_m):
-    L = int(ts/dt)
-
     particles = classical_smc(a, r, b, dt, sigma_u, Gamma,
                               mu_0, sigma_0, ts, t_tot, xs_m,
                               sigma_m, n, particles_at=5/ts)
@@ -40,11 +41,10 @@ def csmc_distribs(xs_m):
 
 def main():
     L = int(ts/dt)
-    xs, ys, zs = simulate(t_tot, mu_0, sigma_0, a, r, b,
-                          dt, sigma_u, Gamma,)
+    xs, ys, zs = simulate(t_tot, mu_0, sigma_0, a, r, b, dt, sigma_u, Gamma,)
     xs_m = measure(xs, L, sigma_m)
 
-    distribs_ekf = ekf_distribs(xs_m[:-1])
+    distribs_ekf = ekf_distribs(xs_m)
     distribs_csmc = csmc_distribs(xs_m)
 
     for k in range(3):
@@ -64,7 +64,8 @@ def main():
         for label in legend.get_lines():
             label.set_linewidth(1.5)
 
-        fig.savefig(PATH + "distrib-{}.pdf".format(dimensions[k]))
+        fig.savefig(PATH + "distrib-{}.pdf".format(dimensions[k]),
+                    bbox_inches='tight', pad_inches=0)
 
         plt.show()
 

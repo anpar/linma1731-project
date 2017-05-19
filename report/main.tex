@@ -2,7 +2,6 @@
 
 % Packages
 \input{lib.tex}
-\usepackage[margin=0.5in]{geometry}
 \usepackage{placeins}
 \usepackage{pgfplots}
 \usepackage{amsmath,amsfonts,amssymb}
@@ -23,17 +22,18 @@
 Using first-order forward finite difference, the Lorenz dynamical system can be written as
 \[ \vec{x}_{k+1} = F(\vec{x}_k) + \Gamma\vec{u}_k \]
 where the function $F$ is given by
-\begin{equation*}
+\begin{equation}
     \begin{cases}
         F_1(\vec{x}_k) &= ay_k\delta t + (1-a\delta t)x_k \\
         F_2(\vec{x}_k) &= x_k(r-z_k)\delta t + (1-\delta t)y_k \\
         F_3(\vec{x}_k) &= x_ky_k\delta t + (1-b\delta t)z_k
     \end{cases}.
-\end{equation*}
+    \label{eq:F}
+\end{equation}
 
-\section{Discrete-time system simulation and observation}
+\section{Discrete-time system simulation and observation of the system}
 A sample trajectory resulting from a 50 seconds simulation is given in figure~
-\ref{fig:q2-3d-trajectory}. As expected for this set of paramaters, the trajectory
+\ref{fig:q2-3d-trajectory}. As expected for this set of parameters, the trajectory
 is chaotic and shows the typical ``figure eigth'' form. 
 The trajectory of the first coordinates and the corresponding noisy measurements
 with $\sigma^2_m = 1$ are represented in figure~\ref{fig:q2-mes-vs-real}.
@@ -59,6 +59,18 @@ with $\sigma^2_m = 1$ are represented in figure~\ref{fig:q2-mes-vs-real}.
 \FloatBarrier
 
 \section{Sequential Monte Carlo}
+The results of this section were obtained with a Python implementation of the Classical
+Sequential Monte Carlo (CSMC) algorithm described in~\cite{anuj}. The only difference
+in our case is that the sampling period $\Delta t$ and the process time step $\delta t$
+differs. More specifically, $\Delta t/\delta t = L$ where $L$ is an integer. Because
+of this, the prediction step in CSMS is composed of $L$ successive application of the
+function $F$ (and the addition of the noise on the dynamics) instead of just one as
+in~\cite{anuj}.
+
+To obtain a sufficient level of particles diversity, the variance of the noise on the
+dynamics has finally be fixed to $\sigma^2_u = 0.01$. The effect of this parameter on
+CSMC is discussed in section~\ref{sec:exp}.
+
 \subsection{Particles distribution}
 \label{sec:particles-distri}
 Histograms of the samples distribution in $x_k$ and $y_t$ for $t = 5, 10, 15$ are
@@ -88,8 +100,8 @@ increases (with 1000 particles for example).
 
 \subsection{Particles resampling}
 Particles importance resampling is illustrated in figures~\ref{fig:particle-5-100}
-and~\ref{fig:particle-15-100} for 100 particles. The ojective of this importance
-resampling is to choose the most probables particles with respect to the observed
+and~\ref{fig:particle-15-100} for 100 particles. The objective of this importance
+resampling is to choose the most probable particles with respect to the observed
 value. One can visually check from the histograms of the preceding section (which
 contains the real value as a dashed green line) that the resampled particles indeed tend
 to concentrate around the real value.
@@ -153,6 +165,7 @@ means a better ability to cope with large fluctuations in the dynamics of the sy
 \end{figure}
 
 \subsection{Experiments}
+\label{sec:exp}
 \paragraph{Effect of $\sigma^2_u$}
 The noise on the dynamics $\sigma^2_u$ highly impacts the diversity of the particles set.
 A too small $\sigma^2_u$ causes the particles set to quickly degenerate, that is to
@@ -205,7 +218,8 @@ necessarily decrease.
 \paragraph{Effect of $\delta t$ and $\Delta t$}
 The effect of the ratio of $\Delta t$ to $\delta t$ will now be discussed. Intuitively,
 having $\Delta t/\delta t = 1$ seems to be ideal. Indeed, this reduces the uncertainty
-on the predictions caused by the noise on the dynamics. As a consequence the mean
+on the predictions caused by the noise on the dynamics (because we only have to apply
+the function $F$ and the addition of the noise $u$ once). As a consequence the mean
 estimation error on the first coordinate decreases (and the global estimation error
 thus also decreases sligtly).
 However, this migth also accelerate the degeneracy of the particles set as more
@@ -235,7 +249,7 @@ The trajectories for $x$, $y$ and $z$ coordinates are given in
 figures~\ref{fig:x-trajectory-data}, \ref{fig:y-trajectory-data} and
 \ref{fig:z-trajectory-data} respectively.
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \begin{subfigure}{0.49\textwidth}
         \includegraphics[width=\textwidth]{figures/x-trajectory-data}
@@ -257,21 +271,20 @@ figures~\ref{fig:x-trajectory-data}, \ref{fig:y-trajectory-data} and
     CSMC has been run with 1000 particles.}
 \end{figure}
 
-\FloatBarrier
-
 \section{Implementation of an Extended Kalman Filter}
 The Extended Kalman Filter amounts to applying a regular Kalman filter to the
-linearization of the system. Our system can be represented as :
-
+linearization of the system. Our system can be linearized and written as follows
 \begin{equation*}
     \begin{cases}
-        \vec{x}_{k+1} = F(\vec{x}_k) + \Gamma\vec{u}_k \\
+        \vec{x}_{k+1} = F_k\vec{x}_k + \Gamma\vec{u}_k \\
         m_k = x_k + w_k
     \end{cases}.
 \end{equation*}
-
-In order to linearize this system, the Jacobian of $F$ evaluated at the current
-predicted state needs to be computed. For each time step $k$, this can be written as
+with $x_0 \sim\mathcal{N}(\vec{\mu}_0, \vec{P}_0 = \sigma^2_0)$, $u_k
+\sim\mathcal{N}(\vec{0}, \vec{Q} = \vec{I_3}\sigma^2_u)$,
+$w_k \sim\mathcal{N}(0, R = \sigma^2_m)$ and where $F_k$ is the Jacobian of the
+function $F$ as defined in~\eqref{eq:F} evaluated at the current predicted state.
+For each time step $k$, this Jacobian is given by
 \begin{equation*}
     F_k = 
     \begin{pmatrix}
@@ -280,90 +293,89 @@ predicted state needs to be computed. For each time step $k$, this can be writte
         y_k \delta t & x_k \delta t & 1 - b \delta t.
     \end{pmatrix}
 \end{equation*}
-With $x_0 \sim\mathcal{N}(\vec{\mu}_0, \vec{P}_0 = \sigma^2_0\vec{I}_3)$, $u_k
-\sim\mathcal{N}(\vec{0}, \vec{Q} = \vec{\Gamma}\sigma^2_u)$ and $w_k
-\sim\mathcal{N}(0, R = \sigma^2_m)$, the linearized system is also Gaussian.
-The Kalman Filter's equations can thus directly
-be applied. The prediction step is written as follows:
+It is important not to confuse $F$, the function used in the discrete-time version of
+the Lorenz system, and $F_k$ the Jacobian of $F$ evaluated at $\vec{x}_k$.
+The Kalman filter equations can now be applied directly. The prediction step is written
+as follows:
 \[ \vec{\hat{x}}_{k|k-1} = F(\vec{x}_{k-1|k-1}) \]
-\[ \vec{P}_{k|k-1} = \vec{F}_{k-1} \vec{P}_{k-1|k-1} \vec{F}_{k-1}^\mathsf{T} + \vec{Q}.
-\]
+\[ \vec{P}_{k|k-1} = \vec{F}_{k-1} \vec{P}_{k-1|k-1} \vec{F}_{k-1}^\mathsf{T} + 
+\Gamma\vec{Q}\Gamma. \]
+In our case, when the sampling period $\Delta t/\delta t = L$ with $L$ an integer, the
+Jacobian has to be applied $L$ times (while re-evaluating it each time around the latest
+obtained value) to obtain the prediction of the covariance.  
 The Kalman gain, used in the update step is given by
 \[ \vec{K}_k = \vec{P}_{k|k-1} \vec{H}^\mathsf{T} (\vec{H} ~ \vec{P}_{k|k-1}
 \vec{H}^\mathsf{T} + R)^{-1} \]
-where $\vec{H} = 
-    \begin{pmatrix}
-        1 & 0 & 0 \\
-    \end{pmatrix}
-$.\\
+where $\vec{H} = \left[1~0~0\right]$ because only the first coordinate is measured.
 The updated estimation can then be computed as usual, that is
 \[ \vec{\hat{x}}_{k|k} = \vec{\hat{x}}_{k|k-1} + \vec{K}_k (m_k  - \vec{H} ~
 \vec{\hat{x}}_{k|k-1}) \]
-\[ \vec{P}_{k|k} = \vec{P}_{k|k-1} - \vec{K}_k ~ \vec{H} ~ \vec{P}_{k|k-1} \]
-
-Figure \ref{fig:ekf-results} shows two realizations of our Extended Kalman Filter with
-$\sigma_u^2 = 0.01$, more precisely two trajectories of the $x$ coordinate and the
-corresponding estimation errors (the same error metric has been used as for the particle
-filtering).\\
-
-Notice that one filtering succeeds quite well, whereas the second one fails for the time
-steps in the range $[1300, 1500]$. This emphasizes that the algorithm doesn't always
-converge as well as the particle filter. Besides, the mean errors, even for the best
-realization, clearly indicate that the EKF yields less good results than particle
-filtering (of about one order of magnitude). That being said, it is important to stress
-that the EKF runs significantly faster than the particle filter.
+\[ \vec{P}_{k|k} = \vec{P}_{k|k-1} - \vec{K}_k ~ \vec{H} ~ \vec{P}_{k|k-1}. \]
+This was quite straightforwardly implemented in Python.
+Figure~\ref{fig:ekf-results} shows side by side the estimation error for SMC and for EKF.
+To make the comparison fair, the same parameters (variance of the noise on the dynamics,
+variance of the measurement noise, etc) were used on the same measurements set for both
+algorithm. Note that figure~\ref{fig:smc-error-1000} has been repeated to ease the
+comparison but is identical to figure~\ref{fig:q3-error-1000}. This figure shows that
+EKF is a bit less precise than SMC. However, the difference is quite small and is largely
+compensated by the speed of EKF compared to SMC (especially when the latter uses a
+high number of particles).
 
 \begin{figure}
     \centering
     \begin{subfigure}{0.49\textwidth}
-        \includegraphics[width=\textwidth]{figures/ekf-good-x-trajectory}
-        \caption{Trajectory of the $x$ coordinate - Good filtering} 
+        \includegraphics[width=\textwidth]{figures/error-1000}
+        \caption{Estimation error with SMC with 1000 particles.}
+        \label{fig:smc-error-1000}
     \end{subfigure}%
     ~
     \begin{subfigure}{0.49\textwidth}
-        \includegraphics[width=\textwidth]{figures/ekf-bad-x-trajectory}
-        \caption{Trajectory of the $y$ coordinate - Bad filtering} 
-    \end{subfigure}\\
-    \begin{subfigure}{0.49\textwidth}
-        \includegraphics[width=\textwidth]{figures/ekf-good-error}
-        \caption{Error values - Good filtering} 
+        \includegraphics[width=\textwidth]{figures/ekf-error}
+        \caption{Estimation error with EKF.} 
     \end{subfigure}
-    ~
-    \begin{subfigure}{0.49\textwidth}
-        \includegraphics[width=\textwidth]{figures/ekf-bad-error}
-        \caption{Error values - Bad filtering} 
-    \end{subfigure}\\
-
-    \caption{Trajectories and error values for two realizations of the EKF}
+    \caption{Estimation errors comparison for EKF and SMC.}
     \label{fig:ekf-results}
 \end{figure}
 
 \section{Distributions comparison}
-Figure \ref{fig:space-cdf} shows the state space distributions for both CSMC and EKF
-filtering. In both cases, cumulative distributive functions have the
+Figure~\ref{fig:space-cdf} shows the state space distributions for both CSMC and EKF
+filtering. In both cases, the cumulative distributive functions have the
 typical form of a Normal distribution. This was already observed in
 section~\ref{sec:particles-distri} on the histograms for CSMS and was totally expected
-for EKF by design of the Kalman filter.
+for EKF by Gaussianity and linearity of the linearized system. 
+Figure~\ref{fig:distrib-x} shows that the difference in CDF between EKF and CSMC is
+negligible for the first coordinate of the trajectory. This is less true for the
+second and third coordinates where the means can differ by up to 1 (see
+figures~\ref{fig:distrib-y} and \ref{fig:distrib-z}). In term of variance, however,
+the CDFs match pretty well for all three coordinates.
 
 \begin{figure}
     \centering
     \begin{subfigure}{0.49\textwidth}
         \includegraphics[width=\textwidth]{figures/distrib-x}
         \caption{Space distribution for $x$ coordinate} 
+        \label{fig:distrib-x}
     \end{subfigure}%
     ~
     \begin{subfigure}{0.49\textwidth}
         \includegraphics[width=\textwidth]{figures/distrib-y}
-        \caption{Space distribution for $y$ coordinate} 
+        \caption{Space distribution for $y$ coordinate}
+        \label{fig:distrib-y}
     \end{subfigure}%
     \\
     \begin{subfigure}{0.49\textwidth}
         \includegraphics[width=\textwidth]{figures/distrib-z}
         \caption{Space distribution for $z$ coordinate} 
+        \label{fig:distrib-z}
     \end{subfigure}%
-    
-    \caption{Space CDF distributions for CSMC and EKF filtering at $t = 5$s}
+    \caption{State space CDF for CSMC and EKF filtering at $t = \SI{5}{s}$.
+    To obtain smooth curves, 10000 samples were drawned from a Normal distribution with
+    the mean and the variance provided by EKF at $t = \SI{5}{s}$ and CSMC used 10000
+    particles.}
     \label{fig:space-cdf}
 \end{figure}
+
+\bibliographystyle{plain}
+\bibliography{biblio}
 
 \end{document}
