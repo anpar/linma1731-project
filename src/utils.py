@@ -246,8 +246,9 @@ def ekf2(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
     n_iter = len(xs_m)
     assert n_iter == int(t_tot/ts) + 1
 
-    # Set up
     Q = (sigma_u)**2 * Gamma
+    R = (sigma_m)**2
+    P0 = (sigma_0)**2 * np.eye(3)
 
     # Predicted mean/covariance
     mu_pred = np.zeros((n_iter, 3))
@@ -257,26 +258,27 @@ def ekf2(a, r, b, dt, sigma_u, Gamma, mu_0, sigma_0, ts,
     mu = np.zeros((n_iter, 3))
     cov = np.zeros((n_iter, 3, 3))
 
-    # Initial values, t = 0
-    mu[0] = np.array([mu_0]*3)
-    cov[0] = (sigma_0)**2 * np.eye(3)
+    # Initial guess for t = 0
+    mu_pred[0] = np.array([mu_0]*3)
+    cov_pred[0] = P0
 
     for t in range(n_iter-1):
+        # Correction using measurements at time t
+        K = cov_pred[t][:, 0] / (R + cov_pred[t][0, 0])
+        mu[t] = mu_pred[t] + K * (xs_m[t] - mu_pred[t, 0])
+        cov[t] = cov_pred[t] - np.outer(K, cov_pred[t][0, :])
+
         # Prediction for time t+1
         x, y, z = mu[t]
+        mu_pred[t+1, 0], mu_pred[t+1, 1], mu_pred[t+1, 2] = \
+        next_state_vector_L(x, y, z, L, a, r, b, dt, sigma_u, Gamma)
+
         c = cov[t]
         # We must apply the Jacobian L times
         for i in range(L):
-            J = jacobian(x, y, z, a, r, b, dt)
-            x, y, z = J.dot([x, y, z])
-            c = (J.dot(c)).dot(J.transpose()) + (Gamma.dot(Q)).dot(Gamma)
+            A = jacobian(x, y, z, a, r, b, dt)
+            c = (A.dot(c)).dot(A.transpose()) + (Gamma.dot(Q)).dot(Gamma)
 
-        mu_pred[t+1, 0], mu_pred[t+1, 1], mu_pred[t+1, 2] = x, y, z
         cov_pred[t+1] = c
-
-        # Correction using measurements at time t+1
-        K = cov_pred[t+1][:, 0] / ((sigma_m**2) + cov_pred[t+1][0, 0])
-        mu[t+1] = mu_pred[t+1] + K * (xs_m[t+1] - mu_pred[t+1, 0])
-        cov[t+1] = cov_pred[t+1] - K.dot(cov_pred[t+1][0, :])
 
     return mu, cov
