@@ -35,7 +35,7 @@ where the function $F$ is given by
 \section{Discrete-time system simulation and observation of the system}
 A sample trajectory resulting from a 50 seconds simulation is given in figure~
 \ref{fig:q2-3d-trajectory}. As expected for this set of parameters, the trajectory
-is chaotic and shows the typical ``figure eigth'' form. 
+is chaotic and shows the typical ``figure eigth'' form of a Lorenz system. 
 The trajectory of the first coordinates and the corresponding noisy measurements
 with $\sigma^2_m = 1$ are represented in figure~\ref{fig:q2-mes-vs-real}.
 \begin{figure}[hb]
@@ -78,7 +78,10 @@ Histograms of the samples distribution in $x_k$ and $y_t$ for $t = 5, 10, 15$ ar
 given in figures~\ref{fig:q3-hist-x-100} and \ref{fig:q3-hist-y-100} respectively
 (after resampling). These two figures show that the particles tend to be normally
 distributed around the real value. This is even more true when the number of particles
-increases (with 1000 particles for example).
+increases (with 1000 particles for example). For this value of $\sigma^2_u$, the degeneracy
+of the particles is not visible on these histograms. Smaller values of $\sigma^2_u$ (e.g.
+\texttt{10eps}) generally lead to a total degeneracy (i.e. only one particle remains) starting
+around $t = \SI{10}{s}$.
 
 \begin{figure}
     \centering
@@ -102,10 +105,14 @@ increases (with 1000 particles for example).
 \subsection{Particles resampling}
 Particles importance resampling is illustrated in figures~\ref{fig:particle-5-100}
 and~\ref{fig:particle-15-100} for 100 particles. The objective of this importance
-resampling is to choose the most probable particles with respect to the observed
+resampling is to choose the most probable particles with respect to the measured
 value. One can visually check from the histograms of the preceding section (which
 contains the real value as a dashed green line) that the resampled particles indeed tend
 to concentrate around the real value.
+
+Figure~\ref{fig:irs} better illustrates importance resampling with histograms. From this
+figure, it can clearly be seen that the particles tend to ``move'' toward the real value after
+resampling.
 
 \begin{figure}
     \centering
@@ -123,6 +130,16 @@ to concentrate around the real value.
     \caption{Particles before and after resampling for 100 particles.
     Transparence level of red crosses indicates if particles have been chosen
     multiples times (the less transparent, the more a particle has been chosen).}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/hist-irs-1000}
+    \caption{Illustration of importance resampling with particles histogram of the first coordinate
+    for $t=5, 10, 15$s and for 1000 particles. The red bars represent the particle distribution
+    before resampling while the blue bars represent the particle distribution after importance
+    resampling.}
+    \label{fig:irs}
 \end{figure}
 
 \subsection{Estimation error}
@@ -221,13 +238,14 @@ The effect of the ratio of $\Delta t$ to $\delta t$ will now be discussed. Intui
 having $\Delta t/\delta t = 1$ seems to be ideal. Indeed, this reduces the uncertainty
 on the predictions caused by the noise on the dynamics (because we only have to apply
 the function $F$ and the addition of the noise $u$ once). As a consequence the mean
-estimation error on the first coordinate decreases (and the global estimation error
-thus also decreases slightly).
+estimation error on the first coordinate decreases (while, surprisingly, the global
+estimation error does not decrease at all). This is illustrated in figure~\ref{fig:error-tsdt1}.
 However, this might also accelerate the degeneracy of the particles set as more
 resampling are needed. At the opposite, having a large $\Delta t/\delta t$ has the
 effect of increasing the estimation error because more uncertainty due to the noise on
 the dynamics accumulates in the predictions before the predictions gets resampled using
-the observed value.
+the observed value. Large peak of errors may also appear as the system may vary a lot between
+successive measurements. This is illustrated in figure~\ref{fig:error-tsdt100}.
 
 \paragraph{Effect of $\Gamma$}
 To be fair in the comparison, we used $\Gamma$ matrices that conserve the effective
@@ -242,8 +260,34 @@ noise variance on each coordinates. For example,
 \end{equation*}
 conserves the noise variance on each coordinates. Such a $\Gamma$ matrix imposes the
 same noise on each coordinate. Having the same noise on each coordinate reduces a lot
-the global estimation error which is around 1 with 100 particles (better than with
-1000 particles and $\Gamma = I_3$).
+the global estimation error. This is illustrated in figure~\ref{fig:error-gamma} where it
+can be seen that the global estimation error is around 1 (0.5 less than with 1000 particles,
+see figure~\ref{fig:q3-error-1000}).
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{figures/error-100-tsdt1}
+        \caption{For $\Delta t/\delta t$ = 1.} 
+        \label{fig:error-tsdt1}
+    \end{subfigure}%
+    ~
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{figures/error-100-tsdt100}
+        \caption{For $\Delta t/\delta t$ = 100.} 
+        \label{fig:error-tsdt100}
+    \end{subfigure}\\
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{figures/error-100-gamma}
+        \caption{For $\Gamma$ as described in the text..} 
+        \label{fig:error-gamma}
+    \end{subfigure}
+    \caption{Effect of $\Delta t/\delta t$ and $\Gamma$ on the estimation error. Simulations
+    have been performed with 100 particles.}
+\end{figure}
 
 \subsection{Results on the given dataset}
 The trajectories for $x$, $y$ and $z$ coordinates are given in

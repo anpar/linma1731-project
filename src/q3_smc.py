@@ -8,17 +8,20 @@ import math
 
 PATH='../report/figures/'
 
-def plot_hist(x, xs, dt, ts, filename):
+def plot_hist(x, x_tilde, xs, dt, ts, filename):
     fig = plt.figure()
     plt.subplot(1, 3, 1)
+    #plt.hist(x_tilde[(int(5/ts))], color='r', align='mid', alpha=0.5)
     plt.hist(x[int(5/ts), :], color='b', align='mid', alpha=0.5)
     plt.axvline(xs[int(5/dt)], color='g', linestyle='dashed', linewidth=2)
 
     plt.subplot(1, 3, 2)
+    #plt.hist(x_tilde[(int(10/ts))], color='r', align='mid', alpha=0.5)
     plt.hist(x[int(10/ts), :], color='b', align='mid', alpha=0.5)
     plt.axvline(xs[int(10/dt)], color='g', linestyle='dashed', linewidth=2)
 
     plt.subplot(1, 3, 3)
+    #plt.hist(x_tilde[(int(15/ts))], color='r', align='mid', alpha=0.5)
     plt.hist(x[int(15/ts), :], color='b', align='mid', alpha=0.5)
     plt.axvline(xs[int(15/dt)], color='g', linestyle='dashed', linewidth=2)
 
@@ -91,8 +94,8 @@ def plot_smc(a, r, b, dt, ts, t_tot, mu_0, sigma_0, sigma_u, Gamma,
                                                             sigma_m, n)
 
     # Histograms
-    plot_hist(x, xs, dt, ts, filename[0])
-    plot_hist(y, ys, dt, ts, filename[1])
+    plot_hist(x, x_tilde, xs, dt, ts, filename[0])
+    plot_hist(y, x_tilde, ys, dt, ts, filename[1])
 
     # Error function
     fig, ax = plt.subplots()
@@ -159,6 +162,11 @@ def main():
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
              filename=filename)
     """
+    filename = ["hist-irs-1000.pdf"] + [None]*7
+    plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.01, t_tot=16, mu_0=1,
+             sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
+             Gamma=np.eye(3), sigma_m=math.sqrt(1), n=1000,
+             filename=filename)
     filename = ["hist-x-50.pdf", "hist-y-50.pdf", "error-50.pdf",
                "particles-5-50.pdf", "particles-15-50.pdf",
                 "x-trajectory-50.pdf", "y-trajectory-50.pdf",
@@ -215,7 +223,7 @@ def main():
     plot_smc(a=a, r=r, b=b, dt=0.001, ts=0.1, t_tot=16, mu_0=1,
              sigma_0=math.sqrt(0.001), sigma_u=sigma_u,
              Gamma=np.eye(3), sigma_m=math.sqrt(1), n=100,
-             filename=filename)
+            filename=filename)
 
     filename = ["hist-x-1000.pdf", "hist-y-1000.pdf", "error-1000.pdf",
                "particles-5-1000.pdf", "particles-15-1000.pdf",
