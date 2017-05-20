@@ -10,6 +10,7 @@
 \usepackage{todonotes}
 \newcommand\norm[1]{\left\lVert#1\right\rVert}
 \renewcommand{\vec}[1]{\mathbf{#1}}
+\bibliographystyle{ieeetr}
 
 \title{LINMA1731 - Project}
 \author{Antoine Paris\and Mathieu Xhonneux}
@@ -63,7 +64,7 @@ The results of this section were obtained with a Python implementation of the Cl
 Sequential Monte Carlo (CSMC) algorithm described in~\cite{anuj}. The only difference
 in our case is that the sampling period $\Delta t$ and the process time step $\delta t$
 differs. More specifically, $\Delta t/\delta t = L$ where $L$ is an integer. Because
-of this, the prediction step in CSMS is composed of $L$ successive application of the
+of this, the prediction step in CSMS is composed of $L$ successive applications of the
 function $F$ (and the addition of the noise on the dynamics) instead of just one as
 in~\cite{anuj}.
 
@@ -75,7 +76,7 @@ CSMC is discussed in section~\ref{sec:exp}.
 \label{sec:particles-distri}
 Histograms of the samples distribution in $x_k$ and $y_t$ for $t = 5, 10, 15$ are
 given in figures~\ref{fig:q3-hist-x-100} and \ref{fig:q3-hist-y-100} respectively
-(after resampling). These two figures shows that the particles tend to be normally
+(after resampling). These two figures show that the particles tend to be normally
 distributed around the real value. This is even more true when the number of particles
 increases (with 1000 particles for example).
 
@@ -133,7 +134,7 @@ From these figures, it can be observed that the estimation error decreases with 
 number of particles. This is linked to the observations made previously about the
 particles distribution. The higher the number of particles, the more this distribution
 is close to a normal centered on the real value. Peak of large errors also seems to
-rarify with higher number of particles. This can be explained as follows: an higher
+rarify with higher number of particles. This can be explained as follows: a higher
 number of particles means a larger diversity across the particles and a larger diversity
 means a better ability to cope with large fluctuations in the dynamics of the system.
 
@@ -171,7 +172,7 @@ The noise on the dynamics $\sigma^2_u$ highly impacts the diversity of the parti
 A too small $\sigma^2_u$ causes the particles set to quickly degenerate, that is to
 contain only a few number of very close particles. When this happens, the algorithm is
 no longer able to efficiently estimate the trajectory and the error skyrockets. Larger
-value of $\sigma^2_u$ adds uncertainty on the dynamics of the system. This obviously
+values of $\sigma^2_u$ add uncertainty on the dynamics of the system. This obviously
 limits the accuracy of the prediction made by the algorithm but helps a lot to keep
 a diverse set of particles.
 
@@ -221,8 +222,8 @@ having $\Delta t/\delta t = 1$ seems to be ideal. Indeed, this reduces the uncer
 on the predictions caused by the noise on the dynamics (because we only have to apply
 the function $F$ and the addition of the noise $u$ once). As a consequence the mean
 estimation error on the first coordinate decreases (and the global estimation error
-thus also decreases sligtly).
-However, this migth also accelerate the degeneracy of the particles set as more
+thus also decreases slightly).
+However, this might also accelerate the degeneracy of the particles set as more
 resampling are needed. At the opposite, having a large $\Delta t/\delta t$ has the
 effect of increasing the estimation error because more uncertainty due to the noise on
 the dynamics accumulates in the predictions before the predictions gets resampled using
@@ -375,7 +376,6 @@ the CDFs match pretty well for all three coordinates.
     \label{fig:space-cdf}
 \end{figure}
 
-\bibliographystyle{plain}
 \bibliography{biblio}
 
 \end{document}
